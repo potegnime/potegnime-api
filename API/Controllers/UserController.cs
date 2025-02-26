@@ -308,16 +308,17 @@ namespace API.Controllers
             try
             {
                 updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
-                if (updateRoleDto.RoleName != "admin" &&  updateRoleDto.RoleName != "uporabnik")
+                if (
+                    updateRoleDto.RoleName != "admin" &&  
+                    updateRoleDto.RoleName != "user" && 
+                    updateRoleDto.RoleName != "uploader"
+                    )
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message= "RoleName mora vsebovati vrednost admin ali uporabnik" });
                 }
-                // Role table: 1 = Admin, 2 = Uporabnik
-                
-                int roleId = updateRoleDto.RoleName == "admin" ? 1 : 2;
 
                 Claim claim = new Claim("uid", Convert.ToString(updateRoleDto.UserId));
-                await _userService.UpdateRole(claim, roleId);
+                await _userService.UpdateRole(claim, updateRoleDto.RoleName);
                 return Ok();
             }
             catch (Exception e)

@@ -36,7 +36,7 @@ namespace API.Services.UserService
         Task UpdatePassword(Claim claim, string newPassword);
 
         // Update user role
-        Task UpdateRole(Claim claim, int roleId);
+        Task UpdateRole(Claim claim, string roleName);
 
         // Get user by id
         Task<User> GetUserById(int userId);

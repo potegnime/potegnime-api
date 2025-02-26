@@ -249,11 +249,11 @@ namespace API.Services.UserService
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateRole(Claim claim, int roleId)
+        public async Task UpdateRole(Claim claim, string roleName)
         {
-            // Role table: 1 = Admin, 2 = Uporabnik
-            Role role = _context.Role.FirstOrDefault(r => r.RoleId == roleId) ?? throw new ArgumentException("Role not found");
-            var user = await GetUserById(int.Parse(claim.Value));
+            Role role = _context.Role.FirstOrDefault(r => r.Name == roleName) ?? 
+                throw new ArgumentException("Role not found");
+            User user = await GetUserById(int.Parse(claim.Value));
             user.Role = role;
             user.RoleId = role.RoleId;
             await _context.SaveChangesAsync();

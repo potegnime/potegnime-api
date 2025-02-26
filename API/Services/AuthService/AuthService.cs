@@ -57,8 +57,8 @@ namespace API.Services.AuthService
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
-            // Role table: 1 = Admin, 2 = Uporabnik
-            Role role = _context.Role.FirstOrDefault(r => r.RoleId == 2) ?? throw new ArgumentException("Role not found");
+
+            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ?? throw new ArgumentException("Role not found");
             var newUser = new User
             {
                 Username = request.Username,
@@ -67,7 +67,7 @@ namespace API.Services.AuthService
                 PasswordSalt = salt,
                 ProfilePicFilePath = null,
                 JoinedDate = DateTime.UtcNow,
-                RoleId = 2,
+                RoleId = role.RoleId,
                 Role = role
             };
             // Add new user instance to the database
