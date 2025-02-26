@@ -13,6 +13,6 @@ public class User
 
     // 1-many
     [ForeignKey("RoleId")]
-    public required virtual Role Role { get; set; } 
+    public virtual Role Role { get; set; } = null!;
 
 }
