@@ -23,19 +23,6 @@ namespace API.Services.AuthService
         }
 
         // Methods
-        public async Task<string> GenerateJwtToken(UserLoginDto userLoginDto)
-        {
-            if (!await _userService.UserExists(userLoginDto.Username))
-            {
-                throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
-            }
-
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username) 
-                ?? throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
-
-            return GenerateJwtTokenString(user);
-        }
-
         public async Task<string> GenerateJwtToken(int userId)
         {
             if (!await _userService.UserExists(userId))
@@ -63,7 +50,6 @@ namespace API.Services.AuthService
             request.Username = request.Username.Trim().ToLower();
             request.Password = request.Password.Trim();
 
-
             // Check if user exists
             if (await _userService.UserExists(request.Username, request.Email))
             {
@@ -89,7 +75,7 @@ namespace API.Services.AuthService
             await _context.SaveChangesAsync();
             // Save changes to the database
             await _context.SaveChangesAsync();
-            return await GenerateJwtToken(new UserLoginDto { Username = request.Username, Password = request.Password});
+            return await GenerateJwtToken(newUser.UserId);
         }
 
         public async Task<string> LoginAsync(UserLoginDto request)
@@ -120,13 +106,15 @@ namespace API.Services.AuthService
             }
 
             // Generate JWT token
-            return await GenerateJwtToken(request);
+            return await GenerateJwtToken(user.UserId);
         }
 
         public async Task<Boolean> VerifyLogin(string username, string password)
         {
             // Get user by username
             User user = await _userService.GetUserByUsername(username);
+
+            if (user == null) return false;
 
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
@@ -138,12 +126,14 @@ namespace API.Services.AuthService
         // Helper methods
         private string GenerateJwtTokenString(User user)
         {
+            _context.Entry(user).Reference(u => u.Role).Load();
+
             List<Claim> claims = new List<Claim>
             {
                 new Claim("uid", user.UserId.ToString()),
                 new Claim("username", user.Username.ToString()),
                 new Claim("email", user.Email.ToString()),
-                new Claim("role", user.RoleId.ToString()),
+                new Claim("role", user.Role.Name.ToString().ToLower()),
                 new Claim("joined", user.JoinedDate.ToString())
             };
 

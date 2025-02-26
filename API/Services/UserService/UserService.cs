@@ -1,5 +1,4 @@
 ﻿using API.Services.FileService;
-using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 
 namespace API.Services.UserService
@@ -283,17 +282,25 @@ namespace API.Services.UserService
             return user;
         }
 
+        public async Task<Role> GetUserRole(int userId)
+        {
+            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? 
+                throw new Exception("Uporabnik s tem Id ne obstaja!");
+            // Load role relation
+            _context.Entry(user).Reference(x => x.Role).Load();
+
+            return user.Role;
+        }
+
         public async Task<Boolean> IsAdmin(int userId)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? throw new Exception("Uporabnik s tem Id ne obstaja!");
-            // Load role relation
-            _context.Entry(user).Reference(u => u.Role).Load();
-            if (user.Role.Name == "Admin")
+            Role role = await GetUserRole(userId);
+
+            if (role.Name.ToLower() == "admin")
             {
                 return true;
             }
             return false;
-            
         }
 
         public async Task DeleteUser(int userId)

@@ -47,6 +47,9 @@ namespace API.Services.UserService
         // Get user by email
         Task<User> GetUserByEmail(string email);
 
+        // Get user role
+        Task<Role> GetUserRole(int userId);
+
         // Check if user is admin
         Task<Boolean> IsAdmin(int userId);
 

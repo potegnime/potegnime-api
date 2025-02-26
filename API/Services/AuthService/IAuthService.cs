@@ -6,7 +6,6 @@ namespace API.Services.AuthService
     public interface IAuthService
     {
         // Generate JWT
-        Task<string> GenerateJwtToken(UserLoginDto user);
         Task<string> GenerateJwtToken(int userId);
 
         // Register user
