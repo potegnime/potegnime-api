@@ -82,6 +82,24 @@ namespace API.Controllers.Auth
                 return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = "Server error" });
             }
         }
+
+        [HttpPost("forgotPassword"), AllowAnonymous]
+        public async Task<ActionResult> ForgotPassword(string email)
+        {
+            try
+            {
+                await _authService.ForgotPassword(email);
+                return Ok();
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
+            }
+        }   
     }
 }
 

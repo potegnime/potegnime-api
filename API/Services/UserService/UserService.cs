@@ -31,7 +31,7 @@ namespace API.Services.UserService
             }
         }
 
-        public async Task<Boolean> UserExists(string username, string email)
+        public async Task<bool> UserExists(string username, string email)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace API.Services.UserService
             }
         }
 
-        public async Task<Boolean> UserExists(string username)
+        public async Task<bool> UserExists(string username)
         {
             try
             {
@@ -57,7 +57,7 @@ namespace API.Services.UserService
             }
         }
 
-        public async Task<Boolean> UserExists(int userId)
+        public async Task<bool> UserExists(int userId)
         {
             try
             {
@@ -71,13 +71,14 @@ namespace API.Services.UserService
         }
 
         // User based methods
-        public async Task UpdateUsername(Claim claim,  string username)
+        public async Task UpdateUsername(Claim claim, string username)
         {
             // Input formatting - nothing can end with a trailing space
             username = username.Trim().ToLower();
 
             // Check if username is already taken
-            if (await _context.User.AnyAsync(u => u.Username == username)) {
+            if (await _context.User.AnyAsync(u => u.Username == username))
+            {
                 throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom že obstaja!");
             }
 
@@ -154,7 +155,7 @@ namespace API.Services.UserService
         public async Task UpdatePfp(Claim claim, IFormFile profilePicture)
         {
             // Get needed data from appsettings.json
-            var supportedFormats = _configuration.GetSection("FileSystem:SupportedImageFormats").Get<string[]>();                
+            var supportedFormats = _configuration.GetSection("FileSystem:SupportedImageFormats").Get<string[]>();
             string? storageFilePath = _configuration["FileSystem:ProfilePics"];
             int? maxProfilePicSize = Convert.ToInt32(_configuration["FileSystem:ProfilePicsSizeLimit"]);
 
@@ -251,7 +252,7 @@ namespace API.Services.UserService
 
         public async Task UpdateRole(Claim claim, string roleName)
         {
-            Role role = _context.Role.FirstOrDefault(r => r.Name == roleName) ?? 
+            Role role = _context.Role.FirstOrDefault(r => r.Name == roleName) ??
                 throw new ArgumentException("Role not found");
             User user = await GetUserById(int.Parse(claim.Value));
             user.Role = role;
@@ -277,14 +278,14 @@ namespace API.Services.UserService
 
         public async Task<User> GetUserByEmail(string email)
         {
-            User user = await _context.User.FirstOrDefaultAsync(u => u.Email == email) ?? 
+            User user = await _context.User.FirstOrDefaultAsync(u => u.Email == email) ??
                 throw new Exception("Uporabnik s tem e-poštnim naslovom ne obstaja!");
             return user;
         }
 
         public async Task<Role> GetUserRole(int userId)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? 
+            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
                 throw new Exception("Uporabnik s tem Id ne obstaja!");
             // Load role relation
             _context.Entry(user).Reference(x => x.Role).Load();
@@ -292,7 +293,7 @@ namespace API.Services.UserService
             return user.Role;
         }
 
-        public async Task<Boolean> IsAdmin(int userId)
+        public async Task<bool> IsAdmin(int userId)
         {
             Role role = await GetUserRole(userId);
 
@@ -305,7 +306,7 @@ namespace API.Services.UserService
 
         public async Task DeleteUser(int userId)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? 
+            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
                 throw new Exception("Uporabnik s tem Id ne obstaja!");
             _context.User.Remove(user);
             await _context.SaveChangesAsync();

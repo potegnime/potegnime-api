@@ -18,6 +18,10 @@ namespace API.Services.AuthService
 
         // Verify login
         // Used to verify login credentials
-        Task<Boolean> VerifyLogin(string username, string password);
+        Task<bool> VerifyLogin(string username, string password);
+
+        // Forgot password
+        // Returns true if user exists (email sent) and false if user does not exist (email not sent)
+        Task<bool> ForgotPassword(string userEmail);
     }
 }

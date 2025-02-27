@@ -9,9 +9,9 @@ namespace API.Services.UserService
 
         // Verify if user exists
         // Returns true if user exists, false if not
-        Task<Boolean> UserExists(string username, string email);
-        Task<Boolean> UserExists(string username);
-        Task<Boolean> UserExists(int userId);
+        Task<bool> UserExists(string username, string email);
+        Task<bool> UserExists(string username);
+        Task<bool> UserExists(int userId);
 
         // User based methods
         // Update user username
@@ -51,7 +51,7 @@ namespace API.Services.UserService
         Task<Role> GetUserRole(int userId);
 
         // Check if user is admin
-        Task<Boolean> IsAdmin(int userId);
+        Task<bool> IsAdmin(int userId);
 
         // Delete user
         Task DeleteUser(int userId);

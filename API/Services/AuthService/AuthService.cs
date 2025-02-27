@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using API.Services.EmailService;
 
 namespace API.Services.AuthService
 {
@@ -13,6 +14,7 @@ namespace API.Services.AuthService
         public readonly IConfiguration _configuration;
         private readonly DataContext _context;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
 
         // Constructor
         public AuthService(DataContext context, IUserService userService, IConfiguration configuration)
@@ -30,7 +32,7 @@ namespace API.Services.AuthService
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
             }
 
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? 
+            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             return GenerateJwtTokenString(user);
@@ -39,7 +41,7 @@ namespace API.Services.AuthService
         public async Task<string> RegisterAsync(UserRegisterDto request)
         {
             // Input validation
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) 
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)
                 || string.IsNullOrWhiteSpace(request.Email))
             {
                 throw new ArgumentException("Uporabniške ime, e-poštni naslov in geslo so obvezni!");
@@ -58,7 +60,7 @@ namespace API.Services.AuthService
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
 
-            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ?? 
+            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ??
                 throw new ArgumentException("Role not found");
             User newUser = new User
             {
@@ -110,7 +112,7 @@ namespace API.Services.AuthService
             return await GenerateJwtToken(user.UserId);
         }
 
-        public async Task<Boolean> VerifyLogin(string username, string password)
+        public async Task<bool> VerifyLogin(string username, string password)
         {
             // Get user by username
             User user = await _userService.GetUserByUsername(username);
@@ -122,6 +124,24 @@ namespace API.Services.AuthService
                 return false;
             }
             return true;
+        }
+
+        public async Task<bool> ForgotPassword(string userEmail)
+        {
+            User user = await _userService.GetUserByEmail(userEmail);
+            if (user == null)
+            {
+                return false;
+            }
+            try
+            {
+                _emailService.SendEmail(userEmail);
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
         }
 
         // Helper methods
