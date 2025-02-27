@@ -58,8 +58,9 @@ namespace API.Services.AuthService
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
 
-            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ?? throw new ArgumentException("Role not found");
-            var newUser = new User
+            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ?? 
+                throw new ArgumentException("Role not found");
+            User newUser = new User
             {
                 Username = request.Username,
                 Email = request.Email,

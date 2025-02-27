@@ -1,10 +1,15 @@
-﻿namespace API.Models.Main;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace API.Models.Main;
 
 public class Role
 {
+    [Key]
     public required int RoleId { get; set; }
+
+    [Required]
     public required string Name { get; set; }
 
-    // 1-many
-    public virtual List<User> Users { get; set; } = new();
+    // Navigation properties
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }
