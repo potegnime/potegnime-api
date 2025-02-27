@@ -48,6 +48,10 @@ public class User
 
     public float? DonatedEur { get; set; }
 
+    public string? PasswordResetToken { get; set; }
+
+    public DateTime? PasswordResetTokenExpiration { get; set; }
+
     [Required]
     public required int RoleId { get; set; }
 
