@@ -85,10 +85,15 @@ namespace API.Controllers.Auth
         [HttpPost("forgotPassword"), AllowAnonymous]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
+            // TODO rate limit?
             try
             {
                 await _authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
+            }
+            catch (SendGridLimitExcpetion)
+            {
+                return StatusCode(429, new ErrorResponseDto { ErrorCode = 1, Message = "SendGrid limit exceeded" });
             }
             catch (ArgumentException e)
             {

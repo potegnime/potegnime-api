@@ -160,6 +160,10 @@ namespace API.Services.AuthService
                 // Do not throw an exception, as this would allow for checking if email exists in the database
                 return;
             }
+            catch (SendGridLimitExcpetion)
+            {
+                throw new SendGridLimitExcpetion();
+            }
         }
 
         public async Task<string> ResetPassword(ResetPasswordDto resetPasswordDto)
