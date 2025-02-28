@@ -2,6 +2,6 @@
 {
     public interface IEmailService
     {
-        void SendEmail(string userEmail);
+        Task SendEmailAsync(string userEmail, Dictionary<string, string> templateData);
     }
 }

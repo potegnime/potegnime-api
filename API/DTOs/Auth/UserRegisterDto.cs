@@ -1,4 +1,4 @@
-﻿namespace API.DTOs.User
+﻿namespace API.DTOs.Auth
 {
     public class UserRegisterDto
     {

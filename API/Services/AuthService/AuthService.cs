@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using API.Services.EmailService;
+using System.Security.Cryptography;
 
 namespace API.Services.AuthService
 {
@@ -17,10 +18,11 @@ namespace API.Services.AuthService
         private readonly IEmailService _emailService;
 
         // Constructor
-        public AuthService(DataContext context, IUserService userService, IConfiguration configuration)
+        public AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
             _userService = userService;
+            _emailService = emailService;
             _configuration = configuration;
         }
 
@@ -78,7 +80,7 @@ namespace API.Services.AuthService
             await _context.SaveChangesAsync();
             // Save changes to the database
             await _context.SaveChangesAsync();
-            return await GenerateJwtToken(newUser.UserId);
+            return GenerateJwtTokenString(newUser);
         }
 
         public async Task<string> LoginAsync(UserLoginDto request)
@@ -109,7 +111,7 @@ namespace API.Services.AuthService
             }
 
             // Generate JWT token
-            return await GenerateJwtToken(user.UserId);
+            return GenerateJwtTokenString(user);
         }
 
         public async Task<bool> VerifyLogin(string username, string password)
@@ -126,22 +128,61 @@ namespace API.Services.AuthService
             return true;
         }
 
-        public async Task<bool> ForgotPassword(string userEmail)
+        public async Task ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
-            User user = await _userService.GetUserByEmail(userEmail);
-            if (user == null)
-            {
-                return false;
-            }
             try
             {
-                _emailService.SendEmail(userEmail);
-                return true;
-            }
-            catch (Exception e)
+                string userEmail = forgotPasswordDto.Email.Trim().ToLower();
+                User user = await _userService.GetUserByEmail(userEmail);
+                // Generate reset token
+                string token = GeneratePasswordResetToken();
+
+                // Save token to the database
+                user.PasswordResetToken = token;
+                user.PasswordResetTokenExpiration = DateTime.UtcNow.AddHours(1);
+                await _context.SaveChangesAsync();
+
+                // Send email
+                string baseUrl = _configuration["AppSettings:Audience"] ??
+                    throw new ArgumentException("Base URL not configured!");
+                if (!baseUrl.EndsWith('/')) baseUrl += '/';
+
+                Dictionary<string, string> templateData = new()
             {
-                return false;
+                { "username", user.Username.ToString() },
+                { "reset_link", $"{baseUrl}ponastavi-geslo?token={token}" }
+            };
+                await _emailService.SendEmailAsync(userEmail, templateData);
             }
+            catch (NotFoundException)
+            {
+                // User does not exist, cannot send email
+                // Do not throw an exception, as this would allow for checking if email exists in the database
+                return;
+            }
+        }
+
+        public async Task<string> ResetPassword(ResetPasswordDto resetPasswordDto)
+        {
+            string providedToken = resetPasswordDto.Token;
+            string newPassword = resetPasswordDto.Password;
+
+            // Check token validity
+            User user = await _context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
+                throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
+
+            // Check if token is expired
+            if (user.PasswordResetTokenExpiration < DateTime.UtcNow)
+            {
+                throw new ExpiredTokenException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
+            }
+
+            // Reset password and delete token + expiration
+            user.PasswordHash = HashPassword(newPassword, user.PasswordSalt);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiration = null;
+            await _context.SaveChangesAsync();
+            return GenerateJwtTokenString(user);
         }
 
         // Helper methods
@@ -187,6 +228,16 @@ namespace API.Services.AuthService
         private string HashPassword(string password, string salt)
         {
             return BCrypt.Net.BCrypt.HashPassword(password, salt);
+        }
+
+        private string GeneratePasswordResetToken()
+        {
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                byte[] tokenData = new byte[32];
+                rng.GetBytes(tokenData);
+                return Convert.ToBase64String(tokenData);
+            }
         }
     }
 }

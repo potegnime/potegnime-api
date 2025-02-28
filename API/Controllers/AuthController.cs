@@ -1,5 +1,4 @@
-﻿using API.DTOs.User;
-using API.Services.AuthService;
+﻿using API.Services.AuthService;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
@@ -84,11 +83,11 @@ namespace API.Controllers.Auth
         }
 
         [HttpPost("forgotPassword"), AllowAnonymous]
-        public async Task<ActionResult> ForgotPassword(string email)
+        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
             try
             {
-                await _authService.ForgotPassword(email);
+                await _authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
             }
             catch (ArgumentException e)
@@ -99,7 +98,29 @@ namespace API.Controllers.Auth
             {
                 return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
             }
-        }   
+        }
+
+        [HttpPost("resetPassword"), AllowAnonymous]
+        public async Task<ActionResult<string>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            try
+            {
+                string jwt = await _authService.ResetPassword(resetPasswordDto);
+                return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
+            }
+            catch (InvalidTokenException e)
+            {
+                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
+            }
+            catch (ExpiredTokenException e)
+            {
+                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
+            }
+        }
     }
 }
 

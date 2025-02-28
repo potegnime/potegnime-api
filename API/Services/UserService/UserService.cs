@@ -279,7 +279,7 @@ namespace API.Services.UserService
         public async Task<User> GetUserByEmail(string email)
         {
             User user = await _context.User.FirstOrDefaultAsync(u => u.Email == email) ??
-                throw new Exception("Uporabnik s tem e-poštnim naslovom ne obstaja!");
+                throw new NotFoundException();
             return user;
         }
 
