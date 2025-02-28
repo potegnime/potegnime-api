@@ -127,7 +127,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Popular(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/popular";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -155,7 +155,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> TopRated(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/top_rated";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -183,7 +183,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Upcoming(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/upcoming";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -211,7 +211,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingMovie(string timeWindow, string language)
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = $"https://api.themoviedb.org/3/trending/movie/{timeWindow}";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}";
 
@@ -238,7 +238,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingTv(string timeWindow, string language)
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = $"https://api.themoviedb.org/3/trending/tv/{timeWindow}";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}";
 
