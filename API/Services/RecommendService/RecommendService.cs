@@ -73,7 +73,7 @@ namespace API.Services.RecommendService
             int randomMovieOnPage = random.Next(1, 20);
 
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrlBase = "https://api.themoviedb.org/3/discover/movie";
             string tmdbUrlInit = tmdbUrlBase += $"?api_key={tmdbKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
@@ -99,7 +99,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> NowPlaying(string language, int page, string region) 
         {
             // Get TMDB API key from configugration
-            string? tmdbKey = _configuration["ApiKeys:Tmdb"] ?? throw new Exception("Cannot find internal API keys");
+            string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/now_playing";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -127,6 +127,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Popular(string language, int page, string region)
         {
             // Get TMDB API key from configugration
+            var s = _configuration["Tmdb:Key"];
             string? tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/popular";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
