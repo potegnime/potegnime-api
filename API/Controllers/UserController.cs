@@ -1,8 +1,8 @@
 ﻿using API.DTOs.User;
 using API.Services.UserService;
-using API.Services.AuthService;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using API.Services.AuthService;
 namespace API.Controllers
 {
     [Route("api/user")]
@@ -293,40 +293,6 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost("updateRole"), Authorize]
-        public async Task<ActionResult> UpdateRole([FromForm] UpdateRoleDto updateRoleDto)
-        {
-            // Check if user is admin
-            var uid = User.FindFirstValue("uid");
-            if (uid == null) return Unauthorized();
-
-            if (!await _userService.IsAdmin(Convert.ToInt32(uid)))
-            {
-                return Unauthorized();
-            }
-
-            try
-            {
-                updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
-                if (
-                    updateRoleDto.RoleName != "admin" &&  
-                    updateRoleDto.RoleName != "user" && 
-                    updateRoleDto.RoleName != "uploader"
-                    )
-                {
-                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message= "RoleName mora vsebovati vrednost admin ali uporabnik" });
-                }
-
-                Claim claim = new Claim("uid", Convert.ToString(updateRoleDto.UserId));
-                await _userService.UpdateRole(claim, updateRoleDto.RoleName);
-                return Ok();
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
-        }
-
         [HttpPost("submitUploaderRequest"), Authorize]
         public async Task<ActionResult> SubmitUploaderRequest([FromForm] UploaderRequestDto uploaderRequestDto)
         {
@@ -346,8 +312,16 @@ namespace API.Controllers
 
             try
             {
-                // TODO
-                // Check if user is already an uploader
+                // Check if user is already uploader or admin
+                if (
+                    await _userService.IsUploader(Convert.ToInt32(uid)) ||
+                    await _userService.IsAdmin(Convert.ToInt32(uid))
+                )
+                {
+                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Uporabnik je že uploader ali admin!" });
+                }
+
+                // Store new uploader request to db
                 return Ok();
             }
             catch (Exception e)
