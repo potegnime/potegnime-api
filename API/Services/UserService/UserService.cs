@@ -250,16 +250,6 @@ namespace API.Services.UserService
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateRole(Claim claim, string roleName)
-        {
-            Role role = _context.Role.FirstOrDefault(r => r.Name == roleName) ??
-                throw new ArgumentException("Role not found");
-            User user = await GetUserById(int.Parse(claim.Value));
-            user.Role = role;
-            user.RoleId = role.RoleId;
-            await _context.SaveChangesAsync();
-        }
-
         public async Task<User> GetUserById(int userId)
         {
             User user = await _context.User
@@ -304,6 +294,17 @@ namespace API.Services.UserService
             return false;
         }
 
+        public async Task<bool> IsUploader(int userId)
+        {
+            Role role = await GetUserRole(userId);
+
+            if (role.Name.ToLower() == "uploader")
+            {
+                return true;
+            }
+            return false;
+        }
+
         public async Task DeleteUser(int userId)
         {
             var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
@@ -312,11 +313,11 @@ namespace API.Services.UserService
             await _context.SaveChangesAsync();
         }
 
-        public UploaderRequestStatus? GetUploaderRequestStatus(int userId)
+        public RoleRequestStatus? GetRoleRequestStatus(int userId)
         {
             // TODO - db lookup
             // No request found -> return null
-            return (UploaderRequestStatus)new Random().Next(0, 3); ;
+            return (RoleRequestStatus)new Random().Next(0, 3); ;
         }
     }
 }

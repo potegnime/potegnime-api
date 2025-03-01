@@ -15,6 +15,7 @@ using API.Services.SearchService;
 using API.Services.FileService;
 using API.Services.RecommendService;
 using API.Services.EmailService;
+using API.Services.AdminService;
 
 var builder = WebApplication.CreateBuilder(args);
 var _config = builder.Configuration;
@@ -61,6 +62,7 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
 // Program services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IRecommnedService, RecommendService>();

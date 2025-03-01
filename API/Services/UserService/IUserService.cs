@@ -35,9 +35,6 @@ namespace API.Services.UserService
         // Update user password
         Task UpdatePassword(Claim claim, string newPassword);
 
-        // Update user role
-        Task UpdateRole(Claim claim, string roleName);
-
         // Get user by id
         Task<User> GetUserById(int userId);
 
@@ -53,10 +50,13 @@ namespace API.Services.UserService
         // Check if user is admin
         Task<bool> IsAdmin(int userId);
 
+        // Check if user is uploader
+        Task<bool> IsUploader (int userId);
+
         // Delete user
         Task DeleteUser(int userId);
 
         // Get uploader request status
-        UploaderRequestStatus? GetUploaderRequestStatus(int userId);
+        RoleRequestStatus? GetRoleRequestStatus(int userId);
     }
 }
