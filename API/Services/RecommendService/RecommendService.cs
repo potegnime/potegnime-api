@@ -1,5 +1,5 @@
 ﻿using API.DTOs.Recommend;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace API.Services.RecommendService  
 {
@@ -82,7 +82,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrlInit);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) throw new Exception();
 
@@ -108,7 +108,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbMovieResponse>();
 
@@ -137,7 +137,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbMovieResponse>();
 
@@ -165,7 +165,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbMovieResponse>();
 
@@ -193,7 +193,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbMovieResponse>();
 
@@ -221,7 +221,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbMovieApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbTrendingResponse>();
 
@@ -248,7 +248,7 @@ namespace API.Services.RecommendService
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrl);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
-            var serializedJsonResponse = JsonConvert.DeserializeObject<TmdbTrendingApiResponse>(jsonResponse);
+            var serializedJsonResponse = JsonSerializer.Deserialize<TmdbTrendingApiResponse>(jsonResponse);
 
             if (serializedJsonResponse?.Results == null) return new List<TmdbTrendingResponse>();
 

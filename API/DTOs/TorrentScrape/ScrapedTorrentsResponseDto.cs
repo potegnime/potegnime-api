@@ -1,16 +1,16 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace API.DTOs.TorrentScrape
 {
     public class ScrapedTorrentsResponseDto
     {
-        [JsonProperty("thepiratebay")]
+        [JsonPropertyName("thepiratebay")]
         public List<ScrapredTorrentDto> ThePirateBay { get; set; } = new List<ScrapredTorrentDto>();
         
-        [JsonProperty("yts")]
+        [JsonPropertyName("yts")]
         public List<ScrapredTorrentDto> Yts { get; set; } = new List<ScrapredTorrentDto>();
 
-        [JsonProperty("torrentproject")]
+        [JsonPropertyName("torrentproject")]
         public List<ScrapredTorrentDto> TorrentProject { get; set; } = new List<ScrapredTorrentDto>();
     }
 }

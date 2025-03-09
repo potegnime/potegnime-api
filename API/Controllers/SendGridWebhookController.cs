@@ -1,6 +1,5 @@
 ﻿using API.Services.AuthService;
 using Microsoft.AspNetCore.Authorization;
-using Newtonsoft.Json;
 using Sendgrid.Webhooks.Service;
 
 namespace API.Controllers.SendGrid
