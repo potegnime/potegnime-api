@@ -1,19 +1,18 @@
 ﻿using API.DTOs.Search;
+using API.DTOs.TorrentScrape;
 
 namespace API.Services.SearchService
 {
     public interface ISearchService
     {
         // Get scraped torrents
-        Task<dynamic> GetScrapedTorrentsAsync(SearchRequestDto request);
+        Task<ScrapedTorrentsResponseDto> GetScrapedTorrentsAsync(SearchRequestDto request);
 
-        // Get all provider categories
-        IDictionary<string, List<string>> GetAllProviderCategories();
+        // Get all supported providers and their categories
+        Task<IDictionary<string, List<string>>> GetCategoriesAsync(bool lowercase = false);
 
-        // Get categories by provider
-        List<string> GetProviderCategories(string provider);
-
-        // Get supported providers
-        List<string> GetAllSupportedProviders();
+        // Get all supported providers
+        // Somewhat redundant, can just get keys from GetCategoriesAsync()
+        Task<IList<string>> GetProvidersAsync();
     }
 }

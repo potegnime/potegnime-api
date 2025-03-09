@@ -1,7 +1,6 @@
 ﻿using API.DTOs.Search;
 using API.DTOs.TorrentScrape;
-using Newtonsoft.Json;
-using System.Diagnostics;
+using System.Text.Json;
 
 namespace API.Services.SearchService
 {
@@ -17,113 +16,104 @@ namespace API.Services.SearchService
         }
 
         // Methods
-        public async Task<dynamic> GetScrapedTorrentsAsync(SearchRequestDto request)
+        public async Task<ScrapedTorrentsResponseDto> GetScrapedTorrentsAsync(SearchRequestDto request)
         {
             // Input validation
-            if (request.Query == null)
+            // If category/source is null, set to all (wasn't specified with request)
+            request.Category ??= "All";
+            request.Source ??= "All";
+
+            // Call potegnime-scrapper express.js API route /search
+            string baseUrl = _configuration["potegnime-scraper:Url"] ?? throw new Exception("Cannot find potegnime-scraper API URL");
+            string limit = _configuration["potegnime-scraper:BaseLimit"] ?? throw new Exception("Cannot find potegnime-scraper base limit");
+            string url = $"{baseUrl}/search?query={request.Query}&category={request.Category.ToLower()}&source={request.Source.ToLower()}&limit={limit}";
+
+            using HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(url);
+            if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
             {
-                throw new Exception("Search query parameter is required!");
+                //potegnime-scrapper API returns 500 general error - either down or scraping failed
+                throw new TorrentScraperException();
+            }
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            ScrapedTorrentsResponseDto serializedResponse = JsonSerializer.Deserialize<ScrapedTorrentsResponseDto>(jsonResponse, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) 
+                ?? throw new NotFoundException();
+
+            // Check for empty results
+            if (serializedResponse == null ||
+                serializedResponse.ThePirateBay.Count == 0 &&
+                serializedResponse.Yts.Count == 0 &&
+                serializedResponse.TorrentProject.Count == 0)
+            {
+                throw new NotFoundException();
             }
 
-            // Get scraped torrents from Node.js project
-            if (_configuration["NodeScripts:NodePath"] == null || _configuration["NodeScripts:ScriptsPath"] == null)
-            {
-                throw new Exception("Cannot find internal script paths!");
-            }
-
-            string? constLimit = _configuration["InternalApiSettings:BaseScrapeSearchLimit"];
-            string? nodePath = _configuration["NodeScripts:NodePath"];
-            string? scriptPath = _configuration["NodeScripts:ScriptsPath"];
-            string args = $"\"{request.Query}\" \"{request.Category}\" \"{request.Source}\" {constLimit}";
-            if (nodePath == null || scriptPath == null)
-            {
-                throw new Exception("Cannot find internal script paths");
-            }
-
-            // Start a new process for running Node.js
-            ProcessStartInfo startInfo = new ProcessStartInfo(nodePath, scriptPath + " " + args);
-            startInfo.RedirectStandardOutput = true;
-            startInfo.UseShellExecute = false;
-            startInfo.CreateNoWindow = true;
-            // Create new process
-            Process process = new Process();
-            process.StartInfo = startInfo;
-            try
-            {
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                await process.WaitForExitAsync();
-                // Check if scraping was successful
-                if (output != null && output.StartsWith("ERR-"))
-                {
-                    throw new Exception("Error scraping torrents!");
-                }
-                // First checking for empty results
-                if (output == null || output == "[]" || output == "")
-                {
-                    throw new NotFoundException();
-                }
-                // Deserialize output
-                ScrapedTorrentsResponseDto jsonResponse = JsonConvert.DeserializeObject<ScrapedTorrentsResponseDto>(output) 
-                    ?? throw new Exception("Internal exception");
-                // Second checking for empty results
-                try
-                {
-                    bool allEmpty = jsonResponse.ThePirateBay.Count == 0 &&
-                    jsonResponse.Yts.Count == 0 &&
-                    jsonResponse.TorrentProject.Count == 0;
-                    if (allEmpty)
-                    {
-                        throw new NotFoundException();
-                    }
-                }
-                catch
-                {
-                    throw new NotFoundException();
-                }
-                return jsonResponse ?? throw new Exception("Error scraping torrents");
-            }
-            finally
-            {
-                process.Close();
-            }
-        }
-    
-        public IDictionary<string, List<string>> GetAllProviderCategories()
-        {
-            // Data completely depends on the command bellow, executed in the app.js
-            // console.log(TorrentSearchApi.getProviders());
-
-            IDictionary<string, List<string>> categorySource = new Dictionary<string, List<string>>
-            {
-                { "All", new List<string> { "All" } },
-                { "ThePirateBay", new List<string> { "All", "Audio", "Video", "Applications", "Games", "Porn", "Other", "Top100" } },
-                { "Yts", new List<string> { "All", "Movies" } },
-                { "TorrentProject", new List<string> { "All" } }
-            };
-            return categorySource;
+            return serializedResponse;
         }
 
-        public List<string> GetProviderCategories(string provider)
+        public async Task<IDictionary<string, List<string>>> GetCategoriesAsync(bool lowercase = false)
         {
-            // Don't modify method! Only modify the GetAllProviderCategories()
-
-            IDictionary<string, List<string>> allProviderCategories = this.GetAllProviderCategories();
-            if (allProviderCategories.ContainsKey(provider))
+            // Call potegnime-scrapper express.js API route /categories
+            string baseUrl = _configuration["potegnime-scraper:Url"] ?? throw new Exception("Cannot find potegnime-scraper API URL");
+            string url = $"{baseUrl}/categories";
+            if (lowercase)
             {
-                return allProviderCategories[provider];
-            } else
-            {
-                throw new ArgumentException($"Provider {provider} not found!");
+                url += "?lowercase=true";
             }
+            using HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(url);
+            if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+            {
+                //potegnime-scrapper API returns 500 general error - either down or scraping failed
+                throw new TorrentScraperException();
+            }
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            Dictionary<string, List<string>> serializedResponse = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonResponse, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }) 
+                ?? throw new TorrentScraperException();
+
+            if (serializedResponse == null)
+                throw new TorrentScraperException();
+
+            return serializedResponse ?? throw new TorrentScraperException();
         }
 
-        public List<string> GetAllSupportedProviders()
+        public async Task<IList<string>> GetProvidersAsync()
         {
-            // Don't modify method! Only modify the GetAllProviderCategories()
+            // Call potegnime-scrapper express.js API route /providers
+            string baseUrl = _configuration["potegnime-scraper:Url"] ?? throw new Exception("Cannot find potegnime-scraper API URL");
+            string url = $"{baseUrl}/providers";
+            using HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(url);
+            if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+            {
+                //potegnime-scrapper API returns 500 general error - either down or scraping failed
+                throw new TorrentScraperException();
+            }
+            response.EnsureSuccessStatusCode();
 
-            IDictionary<string, List<string>> allProviderCategories = this.GetAllProviderCategories();
-            return allProviderCategories.Keys.ToList();
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            Dictionary<string, List<string>> serializedResponse = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonResponse, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            })
+                ?? throw new TorrentScraperException();
+
+            if (serializedResponse != null && serializedResponse.TryGetValue("providers", out var providers))
+            {
+                return providers;
+            }
+
+            throw new TorrentScraperException();
         }
     }
 }

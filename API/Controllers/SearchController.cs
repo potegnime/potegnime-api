@@ -1,4 +1,5 @@
 ﻿using API.DTOs.Search;
+using API.DTOs.TorrentScrape;
 using API.Services.SearchService;
 using Microsoft.AspNetCore.Authorization;
 
@@ -24,31 +25,43 @@ namespace API.Controllers
         {
             try
             {
-                
                 // Query is the only necceaary parameter
                 if (searchRequsetDto.Query == null)
                 {
-                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Izraz za iskanje je obvezen!" });
+                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Izraz za iskanje je obvezen" });
                 }
 
-                // If category and source is null, set to all (wasn't specified with request)
-                searchRequsetDto.Category ??= "All";
-                searchRequsetDto.Source ??= "All";
+                // TODO
+                // Cache the categories and providers to reduce the number of requests to the scraper API
 
                 // Check if provider exists
-                if (!_searchService.GetAllSupportedProviders().Contains(searchRequsetDto.Source))
+                if (searchRequsetDto.Source != null)
                 {
-                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Neveljaven vnos vira!" });
+                    IList<string> providers = await _searchService.GetProvidersAsync();
+                    if (!providers.Contains(searchRequsetDto.Source))
+                    {
+                        return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Neveljaven vnos vira" });
+                    }
+
+                    // Check if category for the provider exists
+                    if (searchRequsetDto.Category != null)
+                    {
+                        IDictionary<string, List<string>> categories = await _searchService.GetCategoriesAsync();
+                        List<string> providerCategories = categories[searchRequsetDto.Source];
+
+                        if (!providerCategories.Contains(searchRequsetDto.Category))
+                        {
+                            return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Neveljaven vnos kategorije" });
+                        }
+                    }
                 }
 
-                // Check if category for the provider exists
-                if (!_searchService.GetProviderCategories(searchRequsetDto.Source).Contains(searchRequsetDto.Category))
-                {
-                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Neveljaven vnos kategorije!" });
-                }
-                
-                var result = await _searchService.GetScrapedTorrentsAsync(searchRequsetDto);
+                ScrapedTorrentsResponseDto result = await _searchService.GetScrapedTorrentsAsync(searchRequsetDto);
                 return Ok(result);
+            }
+            catch (TorrentScraperException)
+            {
+                return StatusCode(503, new ErrorResponseDto { ErrorCode = 1, Message = "Napaka pri iskanju torrentov iz drugih virov" });
             }
             catch (NotFoundException)
             {
@@ -60,10 +73,40 @@ namespace API.Controllers
             }
         }
 
-        [HttpGet("allProviderCategories"), Authorize]
-        public ActionResult GetProviderCategories()
+        [HttpGet("categories"), Authorize]
+        public async Task<ActionResult> GetCategories()
         {
-            return Ok(_searchService.GetAllProviderCategories());
+            try
+            {
+                IDictionary<string, List<string>> categories = await _searchService.GetCategoriesAsync();
+                return Ok(categories);
+            }
+            catch (TorrentScraperException)
+            {
+                return StatusCode(503, new ErrorResponseDto { ErrorCode = 1, Message = "Napaka pri iskanju torrentov iz drugih virov" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
+            }
+        }
+
+        [HttpGet("providers"), Authorize]
+        public async Task<ActionResult> GetProviders()
+        {
+            try
+            {
+                IList<string> providers = await _searchService.GetProvidersAsync();
+                return Ok(providers);
+            }
+            catch (TorrentScraperException)
+            {
+                return StatusCode(503, new ErrorResponseDto { ErrorCode = 1, Message = "Napaka pri iskanju torrentov iz drugih virov" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
+            }
         }
     }
 }
