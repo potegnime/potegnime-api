@@ -1,6 +1,6 @@
 ﻿namespace API.Enums
 {
-    public enum UploaderRequestStatus
+    public enum RoleRequestStatus
     {
         Review,
         Approved,

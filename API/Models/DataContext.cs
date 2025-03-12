@@ -10,6 +10,7 @@
         public DbSet<UserNotification> UserNotification { get; set; }
         public DbSet<Notification> Notification { get; set; }
         public DbSet<Recommendation> Recommendation { get; set; }
+        public DbSet<RoleRequest> RoleRequest { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

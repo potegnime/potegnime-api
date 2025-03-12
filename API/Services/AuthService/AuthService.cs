@@ -203,7 +203,7 @@ namespace API.Services.AuthService
                 new Claim("joined", user.JoinedDate.ToString())
             };
 
-            UploaderRequestStatus? uploaderRequestStatus = _userService.GetUploaderRequestStatus(user.UserId);
+            RoleRequestStatus? uploaderRequestStatus = _userService.GetRoleRequestStatus(user.UserId);
             if (uploaderRequestStatus != null)
             {
                 claims.Add(new Claim("uploaderRequestStatus", uploaderRequestStatus.ToString().ToLower()));

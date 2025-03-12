@@ -1,7 +1,4 @@
-﻿using API.DTOs.Auth;
-using API.DTOs.User;
-
-namespace API.Services.AuthService
+﻿namespace API.Services.AuthService
 {
     public interface IAuthService
     {
