@@ -1,3 +1,5 @@
+// TODO check global usings, add/remove if needed
+
 global using Microsoft.EntityFrameworkCore;
 global using API.Models;
 global using API.Models.Main;

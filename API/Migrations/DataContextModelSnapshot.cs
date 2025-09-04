@@ -82,6 +82,46 @@ namespace API.Migrations
                     b.ToTable("Role");
                 });
 
+            modelBuilder.Entity("API.Models.Main.RoleRequest", b =>
+                {
+                    b.Property<int>("RoleRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoleRequestId"));
+
+                    b.Property<int?>("AdminUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CloseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RequestUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestedRoleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RoleRequestId");
+
+                    b.HasIndex("AdminUserId");
+
+                    b.HasIndex("RequestUserId");
+
+                    b.HasIndex("RequestedRoleId");
+
+                    b.ToTable("RoleRequest");
+                });
+
             modelBuilder.Entity("API.Models.Main.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -189,6 +229,31 @@ namespace API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserNotification");
+                });
+
+            modelBuilder.Entity("API.Models.Main.RoleRequest", b =>
+                {
+                    b.HasOne("API.Models.Main.User", "AdminUser")
+                        .WithMany()
+                        .HasForeignKey("AdminUserId");
+
+                    b.HasOne("API.Models.Main.User", "RequestUser")
+                        .WithMany()
+                        .HasForeignKey("RequestUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Models.Main.Role", "RequestedRole")
+                        .WithMany()
+                        .HasForeignKey("RequestedRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AdminUser");
+
+                    b.Navigation("RequestUser");
+
+                    b.Navigation("RequestedRole");
                 });
 
             modelBuilder.Entity("API.Models.Main.User", b =>

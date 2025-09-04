@@ -1,4 +1,6 @@
-﻿namespace API.Models
+﻿// TODO make sure roles are in the database on initialization - admin, user...
+
+namespace API.Models
 {
     public class DataContext : DbContext
     {
