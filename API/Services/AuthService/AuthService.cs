@@ -209,8 +209,10 @@ namespace API.Services.AuthService
                 claims.Add(new Claim("uploaderRequestStatus", uploaderRequestStatus.ToString().ToLower()));
             }
 
-            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                _configuration.GetSection("AppSettings:Key").Value!));
+            var appKey = Environment.GetEnvironmentVariable("APPKEY") ??
+                         throw new Exception("Cannot find internal API keys");
+
+            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appKey));
             SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             JwtSecurityToken token = new JwtSecurityToken(

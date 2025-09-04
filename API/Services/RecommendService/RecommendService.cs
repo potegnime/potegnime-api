@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace API.Services.RecommendService  
+namespace API.Services.RecommendService
 {
     public class RecommendService : IRecommnedService
     {
@@ -73,8 +73,7 @@ namespace API.Services.RecommendService
             int randomPage = random.Next(1, 100);
             int randomMovieOnPage = random.Next(1, 20);
 
-            // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrlBase = "https://api.themoviedb.org/3/discover/movie";
             string tmdbUrlInit = tmdbUrlBase += $"?api_key={tmdbKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
@@ -91,16 +90,16 @@ namespace API.Services.RecommendService
 
             return new Recommendation()
             {
-                Date = DateOnly.FromDateTime(DateTime.Today), 
+                Date = DateOnly.FromDateTime(DateTime.Today),
                 Name = rnd.Title,
                 Type = "movie"
             };
         }
 
-        public async Task<List<TmdbMovieResponse>> NowPlaying(string language, int page, string region) 
+        public async Task<List<TmdbMovieResponse>> NowPlaying(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/now_playing";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -128,7 +127,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Popular(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/popular";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -156,7 +155,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> TopRated(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/top_rated";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -184,7 +183,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Upcoming(string language, int page, string region)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = "https://api.themoviedb.org/3/movie/upcoming";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
 
@@ -212,7 +211,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingMovie(string timeWindow, string language)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = $"https://api.themoviedb.org/3/trending/movie/{timeWindow}";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}";
 
@@ -239,7 +238,7 @@ namespace API.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingTv(string timeWindow, string language)
         {
             // Get TMDB API key from configugration
-            string tmdbKey = _configuration["Tmdb:Key"] ?? throw new Exception("Cannot find internal API keys");
+            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal API keys");
             string tmdbUrl = $"https://api.themoviedb.org/3/trending/tv/{timeWindow}";
             tmdbUrl += $"?api_key={tmdbKey}&language={language}";
 
@@ -335,7 +334,7 @@ namespace API.Services.RecommendService
                     return genreName;
                 }
                 return "Unknown category";
-            } 
+            }
             else if (language == "sl-SI")
             {
                 if (genreDictSlo.TryGetValue(genreId, out string genreName))
@@ -343,7 +342,7 @@ namespace API.Services.RecommendService
                     return genreName;
                 }
                 return "Neznana kategorija";
-            } 
+            }
             else
             {
                 throw new Exception("Neveljaven izbor jezika");
@@ -395,7 +394,7 @@ namespace API.Services.RecommendService
         public required string Overview { get; set; }
 
         [JsonPropertyName("release_date")]
-        public required string Release_Date { get; set; }
+        public string Release_Date { get; set; }
 
         [JsonPropertyName("poster_path")]
         public required string Poster_Path { get; set; }

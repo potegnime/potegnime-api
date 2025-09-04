@@ -18,9 +18,15 @@ using API.Services.FileService;
 using API.Services.RecommendService;
 using API.Services.EmailService;
 using API.Services.AdminService;
+using DotNetEnv;
+
 
 var builder = WebApplication.CreateBuilder(args);
-var _config = builder.Configuration;
+Env.Load();
+
+var connectionString = Environment.GetEnvironmentVariable("DBCONN")!;
+var apiKey = Environment.GetEnvironmentVariable("APPKEY")!;
+var issuer = builder.Configuration["AppSettings:Issuer"];
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -37,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = _config["AppSettings:Issuer"],
+            ValidIssuer = issuer,
             ValidAudiences = new List<string>
             {
                 "http://localhost:4200/",
@@ -45,8 +51,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 "http://localhost:4200/prijava"
 
             },
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                builder.Configuration.GetSection("AppSettings:Key").Value!)
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)
             ),
         };
     });
@@ -56,7 +61,7 @@ builder.Services.AddAuthorization();
 
 // Database connection
 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         o => o.MapEnum<NotificationType>("NotificationType")
     )
 );
