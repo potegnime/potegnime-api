@@ -16,7 +16,7 @@ namespace API.Services.EmailService
         public EmailService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _sendGridApiKey = _configuration["SendGrid:Key"];
+            _sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID") ?? throw new Exception("Cannot get inernal API keys");
             _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"];
             _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"];
             _sendGridSenderName = _configuration["SendGrid:SenderName"];
