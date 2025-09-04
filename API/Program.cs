@@ -46,10 +46,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = issuer,
             ValidAudiences = new List<string>
             {
-                "http://localhost:4200/",
-                "http://localhost:4200",
-                "http://localhost:4200/prijava"
-
+                "https://potegni.me/",
+                "https://potegni.me",
+                "https://potegni.me/prijava"
             },
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)
             ),
@@ -79,7 +78,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
     policy =>
     {
-        policy.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
+        policy.WithOrigins("https://potegni.me").AllowAnyMethod().AllowAnyHeader();
     }));
 
 var app = builder.Build();
