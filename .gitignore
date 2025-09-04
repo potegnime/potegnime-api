@@ -1,5 +1,10 @@
 **/appsettings.Development.json
 /ProfilePics/
+wwwroot/images/profile-pics/
+
+.env
+
+
 
 ########################### Auto Generated ###########################
 ## Ignore Visual Studio temporary files, build results, and
