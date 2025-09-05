@@ -26,7 +26,7 @@ namespace API.Services.SearchService
             // Call potegnime-scrapper express.js API route /search
             string baseUrl = _configuration["potegnime-scraper:Url"] ?? throw new Exception("Cannot find potegnime-scraper API URL");
             string limit = _configuration["potegnime-scraper:BaseLimit"] ?? throw new Exception("Cannot find potegnime-scraper base limit");
-            string url = $"{baseUrl}/search?query={request.Query}&category={request.Category.ToLower()}&source={request.Source.ToLower()}&limit={limit}";
+            string url = $"{baseUrl}search?query={request.Query}&category={request.Category.ToLower()}&source={request.Source.ToLower()}&limit={limit}";
 
             using HttpClient client = new HttpClient();
             HttpResponseMessage response = await client.GetAsync(url);
@@ -41,7 +41,7 @@ namespace API.Services.SearchService
             ScrapedTorrentsResponseDto serializedResponse = JsonSerializer.Deserialize<ScrapedTorrentsResponseDto>(jsonResponse, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            }) 
+            })
                 ?? throw new NotFoundException();
 
             // Check for empty results
@@ -78,7 +78,7 @@ namespace API.Services.SearchService
             Dictionary<string, List<string>> serializedResponse = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonResponse, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            }) 
+            })
                 ?? throw new TorrentScraperException();
 
             if (serializedResponse == null)
