@@ -16,10 +16,14 @@ namespace PotegniMe.Services.EmailService
         public EmailService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _sendGridApiKey = Environment.GetEnvironmentVariable("POTEGNIME_SENDGRID_KEY") ?? throw new Exception("Cannot get inernal PotegniMe keys");
-            _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"];
-            _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"];
-            _sendGridSenderName = _configuration["SendGrid:SenderName"];
+            _sendGridApiKey = Environment.GetEnvironmentVariable("POTEGNIME_SENDGRID_KEY") ??
+                throw new Exception("Cannot get inernal PotegniMe keys");
+            _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"] ??
+                throw new Exception("SendGrid Password Reset Template ID not configured");
+            _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"] ??
+                throw new Exception("SendGrid Sender Email not configured");
+            _sendGridSenderName = _configuration["SendGrid:SenderName"] ??
+                throw new Exception("SendGrid Sender Name not configured");
 
             if (
                 string.IsNullOrEmpty(_sendGridApiKey) ||

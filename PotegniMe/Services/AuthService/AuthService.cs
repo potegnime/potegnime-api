@@ -206,9 +206,9 @@ namespace PotegniMe.Services.AuthService
             };
 
             RoleRequestStatus? uploaderRequestStatus = _userService.GetRoleRequestStatus(user.UserId);
-            if (uploaderRequestStatus != null)
+            if (uploaderRequestStatus is RoleRequestStatus status)
             {
-                claims.Add(new Claim("uploaderRequestStatus", uploaderRequestStatus.ToString().ToLower()));
+                claims.Add(new Claim("uploaderRequestStatus", status.ToString().ToLower()));
             }
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appKey));
