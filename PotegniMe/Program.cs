@@ -24,8 +24,8 @@ using DotNetEnv;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
-var connectionString = Environment.GetEnvironmentVariable("DBCONN")!;
-var apiKey = Environment.GetEnvironmentVariable("APPKEY")!;
+var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN")!;
+var apiKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY")!;
 var issuer = builder.Configuration["AppSettings:Issuer"];
 
 // Add services to the container
@@ -84,19 +84,13 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             try
             {
                 var host = new Uri(origin).Host.ToLowerInvariant();
-                // allow exact primary domain
                 if (host == "potegni.me") return true;
-                // allow any subdomain of your pages deploy (e.g. ab027615.potegnime-angular.pages.dev)
+                // allow any subdomain of frontend (e.g. ab027615.potegnime-angular.pages.dev)
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
-                // allow other pages.dev hosts (optional)
                 if (host.EndsWith(".pages.dev")) return true;
-                // optionally allow any CNAME/custom domain when env var is set (UNSAFE)
-                var allowAny = Environment.GetEnvironmentVariable("ALLOW_ANY_CNAME");
-                if (!string.IsNullOrEmpty(allowAny) &&
-                    (allowAny == "1" || allowAny.Equals("true", StringComparison.OrdinalIgnoreCase)))
-                {
-                    return true;
-                }
+
+                // debug only
+                // if (host == "localhost") return true;
             }
             catch
             {

@@ -9,12 +9,18 @@ namespace PotegniMe.Services.RecommendService
         // Fields
         private readonly IConfiguration _configuration;
         private readonly DataContext _context;
+        private readonly String _tmdbUrlBase;
+        private readonly String _tmdbApiKey;
 
         // Constructor
         public RecommendService(IConfiguration configuration, DataContext context)
         {
             _configuration = configuration;
             _context = context;
+            _tmdbUrlBase = _configuration["Tmdb:Url"] ??
+                           throw new Exception("Cannot find TMDB url");
+            _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ??
+                          throw new Exception("Cannot find TMDB API KEY");
         }
 
         // Methods
@@ -73,9 +79,8 @@ namespace PotegniMe.Services.RecommendService
             int randomPage = random.Next(1, 100);
             int randomMovieOnPage = random.Next(1, 20);
 
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrlBase = "https://api.themoviedb.org/3/discover/movie";
-            string tmdbUrlInit = tmdbUrlBase += $"?api_key={tmdbKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
+            string tmdbUrlBase = this._tmdbUrlBase + "discover/movie";
+            string tmdbUrlInit = tmdbUrlBase += $"?api_key={this._tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -99,9 +104,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> NowPlaying(string language, int page, string region)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = "https://api.themoviedb.org/3/movie/now_playing";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
+            string tmdbUrl = this._tmdbUrlBase + "movie/now_playing";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -127,9 +131,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Popular(string language, int page, string region)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = "https://api.themoviedb.org/3/movie/popular";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
+            string tmdbUrl = this._tmdbUrlBase + "movie/popular";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -155,9 +158,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> TopRated(string language, int page, string region)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = "https://api.themoviedb.org/3/movie/top_rated";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
+            string tmdbUrl = this._tmdbUrlBase + "movie/top_rated";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -183,9 +185,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbMovieResponse>> Upcoming(string language, int page, string region)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = "https://api.themoviedb.org/3/movie/upcoming";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}&page={page}&region={region}";
+            string tmdbUrl = this._tmdbUrlBase + "movie/upcoming";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -211,9 +212,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingMovie(string timeWindow, string language)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = $"https://api.themoviedb.org/3/trending/movie/{timeWindow}";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}";
+            string tmdbUrl = this._tmdbUrlBase + $"trending/movie/{timeWindow}";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -238,9 +238,8 @@ namespace PotegniMe.Services.RecommendService
         public async Task<List<TmdbTrendingResponse>> TrendingTv(string timeWindow, string language)
         {
             // Get TMDB PotegniMe key from configugration
-            string tmdbKey = Environment.GetEnvironmentVariable("TMDB") ?? throw new Exception("Cannot find internal PotegniMe keys");
-            string tmdbUrl = $"https://api.themoviedb.org/3/trending/tv/{timeWindow}";
-            tmdbUrl += $"?api_key={tmdbKey}&language={language}";
+            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{timeWindow}";
+            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
 

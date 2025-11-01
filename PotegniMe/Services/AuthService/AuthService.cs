@@ -15,6 +15,7 @@ namespace PotegniMe.Services.AuthService
         private readonly DataContext _context;
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
+        private readonly String _appKey;
 
         // Constructor
         public AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration)
@@ -23,6 +24,8 @@ namespace PotegniMe.Services.AuthService
             _userService = userService;
             _emailService = emailService;
             _configuration = configuration;
+            _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
+                      throw new Exception("Cannot find TMDB API KEY");
         }
 
         // Methods
@@ -208,10 +211,7 @@ namespace PotegniMe.Services.AuthService
                 claims.Add(new Claim("uploaderRequestStatus", uploaderRequestStatus.ToString().ToLower()));
             }
 
-            var appKey = Environment.GetEnvironmentVariable("APPKEY") ??
-                         throw new Exception("Cannot find internal PotegniMe keys");
-
-            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appKey));
+            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appKey));
             SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             JwtSecurityToken token = new JwtSecurityToken(
