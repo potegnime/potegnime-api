@@ -2,7 +2,7 @@
 using PotegniMe.Services.AuthService;
 using Sendgrid.Webhooks.Service;
 
-namespace PotegniMe.Controllers.SendGrid
+namespace PotegniMe.Controllers
 {
     [Route("sendgrid")]
     [ApiController]

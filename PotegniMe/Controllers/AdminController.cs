@@ -5,7 +5,7 @@ using PotegniMe.Services.AdminService;
 using PotegniMe.Services.AuthService;
 using PotegniMe.Services.UserService;
 
-namespace PotegniMe.Controllers.Admin
+namespace PotegniMe.Controllers
 {
     [Route("admin")]
     [ApiController]

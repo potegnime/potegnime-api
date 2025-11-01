@@ -1,7 +1,7 @@
 using PotegniMe.DTOs.Info;
 using Microsoft.AspNetCore.Authorization;
 
-namespace API.Controllers
+namespace PotegniMe.Controllers
 {
     [Route("info")]
     [ApiController]

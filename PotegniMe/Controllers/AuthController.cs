@@ -4,7 +4,7 @@ using PotegniMe.DTOs.Auth;
 using PotegniMe.DTOs.Error;
 using PotegniMe.Services.AuthService;
 
-namespace PotegniMe.Controllers.Auth
+namespace PotegniMe.Controllers
 {
     [Route("auth")]
     [ApiController]
