@@ -58,7 +58,35 @@ namespace PotegniMe.Controllers
             }
         }
 
-        [HttpPost("uploaderRequests"), AllowAnonymous]
+        [HttpDelete("adminDelete"), Authorize]
+        public async Task<ActionResult> AdminDelete(string username)
+        {
+            // Check if user is admin
+            var uid = User.FindFirstValue("uid");
+            if (uid == null) return Unauthorized();
+
+            if (!await _userService.IsAdmin(Convert.ToInt32(uid)))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                User userToDelete = await _userService.GetUserByUsername(username);
+                if (userToDelete != null)
+                {
+                    await _userService.DeleteUser(Convert.ToInt32(userToDelete.UserId));
+                    return Ok();
+                }
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
+            }
+        }
+
+        [HttpPost("uploaderRequest"), AllowAnonymous]
         public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
         {
             try

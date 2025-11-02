@@ -108,11 +108,11 @@ namespace PotegniMe.Controllers
                 {
                     return Conflict(new ErrorResponseDto
                     {
-                        ErrorCode = 1, 
-                        Message = "Novo uporabniško ime ne sme biti enako prejšnjemu!" 
+                        ErrorCode = 1,
+                        Message = "Novo uporabniško ime ne sme biti enako prejšnjemu!"
                     });
                 }
-                
+
                 var claim = new Claim("uid", userId);
                 await _userService.UpdateUsername(claim, updateUsernameDto.Username);
                 return Ok();
@@ -267,34 +267,6 @@ namespace PotegniMe.Controllers
             }
         }
 
-        [HttpDelete("adminDelete"), Authorize]
-        public async Task<ActionResult> AdminDelete(string username)
-        {
-            // Check if user is admin
-            var uid = User.FindFirstValue("uid");
-            if (uid == null) return Unauthorized();
-
-            if (!await _userService.IsAdmin(Convert.ToInt32(uid)))
-            {
-                return Unauthorized();
-            }
-
-            try
-            {
-                User userToDelete = await _userService.GetUserByUsername(username);
-                if (userToDelete != null)
-                {
-                    await _userService.DeleteUser(Convert.ToInt32(userToDelete.UserId));
-                    return Ok();
-                }
-                return NotFound();
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
-        }
-
         [HttpPost("submitUploaderRequest"), Authorize]
         public async Task<ActionResult> SubmitUploaderRequest([FromBody] UploaderRequestDto uploaderRequestDto)
         {
@@ -304,8 +276,8 @@ namespace PotegniMe.Controllers
             // Check input length
             if (
                 uploaderRequestDto.Experience.Length > 1000 ||
-                uploaderRequestDto.Content.Length > 1000 || 
-                uploaderRequestDto.Proof?.Length > 3000 || 
+                uploaderRequestDto.Content.Length > 1000 ||
+                uploaderRequestDto.Proof?.Length > 3000 ||
                 uploaderRequestDto.OtherTrackers?.Length > 1000
                 )
             {
