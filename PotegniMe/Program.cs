@@ -89,8 +89,9 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
                 if (host.EndsWith(".pages.dev")) return true;
 
-                // debug only
-                // if (host == "localhost") return true;
+                // TODO - check if debug version and allow localhost
+                // var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                //if (host == "localhost") return true;
             }
             catch
             {
