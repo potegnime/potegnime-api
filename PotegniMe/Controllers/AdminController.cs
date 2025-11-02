@@ -86,7 +86,7 @@ namespace PotegniMe.Controllers
             }
         }
 
-        [HttpPost("uploaderRequest"), AllowAnonymous]
+        [HttpPost("uploaderRequest"), Authorize]
         public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
         {
             try

@@ -6,7 +6,7 @@ namespace PotegniMe.Controllers
 {
     [Route("sendgrid")]
     [ApiController]
-    public class SendGridWebHookController: ControllerBase
+    public class SendGridWebHookController : ControllerBase
     {
         // Fields
         private readonly IAuthService _authService;

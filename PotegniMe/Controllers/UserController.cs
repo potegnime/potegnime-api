@@ -22,7 +22,7 @@ namespace PotegniMe.Controllers
         }
 
         // Routes
-        [HttpGet("userId"), AllowAnonymous]
+        [HttpGet("userId"), Authorize]
         public async Task<ActionResult> GetUser(int userId)
         {
             try
@@ -47,7 +47,7 @@ namespace PotegniMe.Controllers
             }
         }
 
-        [HttpGet("username"), AllowAnonymous]
+        [HttpGet("username"), Authorize]
         public async Task<ActionResult> GetUser(string username)
         {
             try
