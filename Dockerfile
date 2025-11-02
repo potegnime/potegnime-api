@@ -3,14 +3,14 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copy the .csproj file and restore dependencies
-COPY API/*.csproj ./API/
-RUN dotnet restore ./API/API.csproj
+COPY PotegniMe/*.csproj ./PotegniMe/
+RUN dotnet restore ./PotegniMe/PotegniMe.csproj
 
 # Copy the rest of the application code
-COPY API/ ./API/
+COPY PotegniMe/ ./PotegniMe/
 
 # Build and publish the application
-WORKDIR /app/API
+WORKDIR /app/PotegniMe
 RUN dotnet publish -c Release -o /app/out
 
 # Use the official ASP.NET Core runtime image for the final image
@@ -26,4 +26,4 @@ ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Run the application
-ENTRYPOINT ["dotnet", "API.dll"]
+ENTRYPOINT ["dotnet", "PotegniMe.dll"]
