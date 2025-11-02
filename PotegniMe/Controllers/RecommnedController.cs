@@ -23,13 +23,14 @@ namespace PotegniMe.Controllers
 
         // Routes
         [HttpPost, Authorize]
-        public async Task<ActionResult<Recommendation>> SetRecommendation([FromForm] Recommendation recommendation)
+        public async Task<ActionResult<Recommendation>> SetRecommendation([FromBody] Recommendation recommendation)
         {
             // Check if user is admin
             var userId = User.FindFirstValue("uid");
             if (userId == null) return Unauthorized();
-            
-            if (!await _userService.IsAdmin(Convert.ToInt32(userId))) {
+
+            if (!await _userService.IsAdmin(Convert.ToInt32(userId)))
+            {
                 return Unauthorized();
             }
 

@@ -91,7 +91,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("updateUsername"), Authorize]
-        public async Task<ActionResult> UpdateUsername([FromForm] UpdateUsernameDto updateUsernameDto)
+        public async Task<ActionResult> UpdateUsername([FromBody] UpdateUsernameDto updateUsernameDto)
         {
             try
             {
@@ -106,7 +106,8 @@ namespace PotegniMe.Controllers
                 var oldUsername = User.FindFirstValue("username");
                 if (oldUsername == updateUsernameDto.Username)
                 {
-                    return Conflict(new ErrorResponseDto { 
+                    return Conflict(new ErrorResponseDto
+                    {
                         ErrorCode = 1, 
                         Message = "Novo uporabniško ime ne sme biti enako prejšnjemu!" 
                     });
@@ -127,7 +128,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("updateEmail"), Authorize]
-        public async Task<ActionResult> UpdateEmail([FromForm] UpdateEmailDto updateEmailDto)
+        public async Task<ActionResult> UpdateEmail([FromBody] UpdateEmailDto updateEmailDto)
         {
             try
             {
@@ -193,7 +194,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("updatePassword"), Authorize]
-        public async Task<ActionResult> UpdatePassword([FromForm] UpdatePasswordDto updatePasswordDto)
+        public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDto updatePasswordDto)
         {
             try
             {
@@ -212,7 +213,7 @@ namespace PotegniMe.Controllers
 
                 // Verify the old password is correct
                 var username = User.FindFirstValue("username") ?? throw new ArgumentNullException();
-                if (! await _authService.VerifyLogin(username, updatePasswordDto.OldPassword))
+                if (!await _authService.VerifyLogin(username, updatePasswordDto.OldPassword))
                 {
                     return StatusCode(403, new ErrorResponseDto { ErrorCode = 1, Message = "Staro geslo ni pravilno!" });
 
@@ -234,7 +235,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpDelete("deleteUser"), Authorize]
-        public async Task<ActionResult> DeleteUser([FromForm] DeleteUserDto deleteUserDto)
+        public async Task<ActionResult> DeleteUser([FromBody] DeleteUserDto deleteUserDto)
         {
             try
             {
@@ -295,7 +296,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("submitUploaderRequest"), Authorize]
-        public async Task<ActionResult> SubmitUploaderRequest([FromForm] UploaderRequestDto uploaderRequestDto)
+        public async Task<ActionResult> SubmitUploaderRequest([FromBody] UploaderRequestDto uploaderRequestDto)
         {
             var uid = User.FindFirstValue("uid");
             if (uid == null) return Unauthorized();

@@ -25,7 +25,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("updateRole"), Authorize]
-        public async Task<ActionResult> UpdateRole([FromForm] UpdateRoleDto updateRoleDto)
+        public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
         {
             // Check if user is admin
             var uid = User.FindFirstValue("uid");
@@ -64,7 +64,7 @@ namespace PotegniMe.Controllers
             try
             {
                 string token = await _authService.RegisterAsync(userRegisterDto);
-                return StatusCode(201, new JwtTokenResponseDto { Token= token });
+                return StatusCode(201, new JwtTokenResponseDto { Token = token });
             }
             catch (ArgumentException e)
             {
