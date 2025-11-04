@@ -33,7 +33,8 @@ namespace PotegniMe.Controllers
                     UserId = user.UserId,
                     Username = user.Username,
                     Joined = user.JoinedDate.Date.ToShortDateString(),
-                    Role = Convert.ToString(user.Role.Name)
+                    Role = Convert.ToString(user.Role.Name),
+                    HasPfp = user.ProfilePicFilePath != null
                 });
             }
             catch (NotFoundException)
@@ -57,7 +58,8 @@ namespace PotegniMe.Controllers
                     UserId = user.UserId,
                     Username = user.Username,
                     Joined = user.JoinedDate.Date.ToShortDateString(),
-                    Role = Convert.ToString(user.Role.Name)
+                    Role = Convert.ToString(user.Role.Name),
+                    HasPfp = user.ProfilePicFilePath != null
                 });
             }
             catch (NotFoundException)
