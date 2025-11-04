@@ -88,10 +88,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 // allow any subdomain of frontend (e.g. ab027615.potegnime-angular.pages.dev)
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
                 if (host.EndsWith(".pages.dev")) return true;
-
-                // TODO - check if debug version and allow localhost
-                // var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-                //if (host == "localhost") return true;
+                if (builder.Environment.IsDevelopment() && host == "localhost") return true;
             }
             catch
             {
