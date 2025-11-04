@@ -32,7 +32,6 @@ namespace PotegniMe.Controllers
                 {
                     UserId = user.UserId,
                     Username = user.Username,
-                    Email = user.Email,
                     Joined = user.JoinedDate.Date.ToShortDateString(),
                     Role = Convert.ToString(user.Role.Name)
                 });
@@ -57,7 +56,6 @@ namespace PotegniMe.Controllers
                 {
                     UserId = user.UserId,
                     Username = user.Username,
-                    Email = user.Email,
                     Joined = user.JoinedDate.Date.ToShortDateString(),
                     Role = Convert.ToString(user.Role.Name)
                 });
