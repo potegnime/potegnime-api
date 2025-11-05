@@ -3,7 +3,7 @@
 // https://developer.themoviedb.org/reference/intro/getting-started
 namespace PotegniMe.Services.RecommendService
 {
-    public interface IRecommnedService
+    public interface IRecommendService
     {
         // Set recommendation
         Task<Recommendation> SetRecommendation(Recommendation recommendation);
@@ -30,9 +30,9 @@ namespace PotegniMe.Services.RecommendService
         Task<List<TmdbMovieResponse>> Upcoming(string language, int page, string region);
 
         // Get trending movies
-        Task<List<TmdbTrendingResponse>> TrendingMovie(string timeWindow, string language);
+        Task<List<TmdbTrendingResponse>> TrendingMovie(string language);
 
         // Get trending TV
-        Task<List<TmdbTrendingResponse>> TrendingTv(string timeWindow, string language);
+        Task<List<TmdbTrendingResponse>> TrendingTv(string language);
     }
 }

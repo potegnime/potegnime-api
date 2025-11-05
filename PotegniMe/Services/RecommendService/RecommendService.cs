@@ -4,13 +4,13 @@ using PotegniMe.DTOs.Recommend;
 
 namespace PotegniMe.Services.RecommendService
 {
-    public class RecommendService : IRecommnedService
+    public class RecommendService : IRecommendService
     {
         // Fields
         private readonly IConfiguration _configuration;
         private readonly DataContext _context;
-        private readonly String _tmdbUrlBase;
-        private readonly String _tmdbApiKey;
+        private readonly string _tmdbUrlBase;
+        private readonly string _tmdbApiKey;
 
         // Constructor
         public RecommendService(IConfiguration configuration, DataContext context)
@@ -209,10 +209,9 @@ namespace PotegniMe.Services.RecommendService
             return recommendResponseDtoList;
         }
 
-        public async Task<List<TmdbTrendingResponse>> TrendingMovie(string timeWindow, string language)
+        public async Task<List<TmdbTrendingResponse>> TrendingMovie(string language)
         {
-            // Get TMDB PotegniMe key from configugration
-            string tmdbUrl = this._tmdbUrlBase + $"trending/movie/{timeWindow}";
+            string tmdbUrl = this._tmdbUrlBase + $"trending/movie/{Constants.Constants.DEFAULT_TIME_WINDOW}";
             tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
@@ -235,10 +234,9 @@ namespace PotegniMe.Services.RecommendService
             return recommendResponseDtoList;
         }
 
-        public async Task<List<TmdbTrendingResponse>> TrendingTv(string timeWindow, string language)
+        public async Task<List<TmdbTrendingResponse>> TrendingTv(string language)
         {
-            // Get TMDB PotegniMe key from configugration
-            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{timeWindow}";
+            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{Constants.Constants.DEFAULT_TIME_WINDOW}";
             tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
@@ -264,71 +262,9 @@ namespace PotegniMe.Services.RecommendService
         // Helper methods
         private static string GetGenreName(int genreId, string language)
         {
-            // Updated data to include both movie and TV genres
-            IDictionary<int, string> genreDictEng = new Dictionary<int, string>
-            {
-                { 28, "Action" },
-                { 12, "Adventure" },
-                { 16, "Animation" },
-                { 35, "Comedy" },
-                { 80, "Crime" },
-                { 99, "Documentary" },
-                { 18, "Drama" },
-                { 10751, "Family" },
-                { 14, "Fantasy" },
-                { 36, "History" },
-                { 27, "Horror" },
-                { 10402, "Music" },
-                { 9648, "Mystery" },
-                { 10749, "Romance" },
-                { 878, "Science Fiction" },
-                { 10770, "TV Movie" },
-                { 53, "Thriller" },
-                { 10752, "War" },
-                { 37, "Western" },
-                { 10759, "Action & Adventure" },
-                { 10762, "Kids" },
-                { 10763, "News" },
-                { 10764, "Reality" },
-                { 10765, "Sci-Fi & Fantasy" },
-                { 10766, "Soap" },
-                { 10767, "Talk" },
-                { 10768, "War & Politics" }
-            };
-
-            IDictionary<int, string> genreDictSlo = new Dictionary<int, string>
-            {
-                { 28, "Akcija" },
-                { 12, "Pustolovščina" },
-                { 16, "Animacija" },
-                { 35, "Komedija" },
-                { 80, "Kriminalka" },
-                { 99, "Dokumentarni" },
-                { 18, "Drama" },
-                { 10751, "Družinski" },
-                { 14, "Fantazija" },
-                { 36, "Zgodovinski" },
-                { 27, "Grozljivka" },
-                { 10402, "Glasbeni" },
-                { 9648, "Misterij" },
-                { 10749, "Romantični" },
-                { 878, "Znanstvena fantastika" },
-                { 10770, "TV film" },
-                { 53, "Triler" },
-                { 10752, "Vojni" },
-                { 37, "Vestern" },
-                { 10759, "Akcija & Pustolovščina" },
-                { 10762, "Otroški" },
-                { 10763, "Novice" },
-                { 10764, "Resničnostni" },
-                { 10765, "Znanstvena fantastika & Fantazija" },
-                { 10766, "Telenovela" },
-                { 10767, "Pogovorna oddaja" },
-                { 10768, "Vojna & Politika" }
-            };
             if (language == "en-US")
             {
-                if (genreDictEng.TryGetValue(genreId, out string genreName))
+                if (Constants.Constants.TMDB_GENRES_ENG.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
@@ -336,16 +272,13 @@ namespace PotegniMe.Services.RecommendService
             }
             else if (language == "sl-SI")
             {
-                if (genreDictSlo.TryGetValue(genreId, out string genreName))
+                if (Constants.Constants.TMDB_GENRES_SL.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
                 return "Neznana kategorija";
             }
-            else
-            {
-                throw new Exception("Neveljaven izbor jezika");
-            }
+            throw new Exception("Neveljaven izbor jezika");
         }
 
     }

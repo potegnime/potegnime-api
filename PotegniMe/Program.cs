@@ -71,7 +71,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IRecommnedService, RecommendService>();
+builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // CORS
