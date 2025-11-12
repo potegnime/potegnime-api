@@ -4,7 +4,7 @@ To learn more about the project, visit [GitHub organization](https://github.com/
 
 ## Overview
 
-- **Framework**: ASP.NET Core 8.0
+- **Framework:** ASP.NET Core 8.0
 - **Database:** PostgreSQL with Entity Framework Core
 - **Authentication:** JWT
 - **Password Security:** BCrypt for password hashing (ans salting)
