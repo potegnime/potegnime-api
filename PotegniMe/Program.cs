@@ -83,8 +83,10 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             if (string.IsNullOrEmpty(origin)) return true; // non-browser or same-origin requests
             try
             {
-                return true; // test
-                var host = new Uri(origin).Host.ToLowerInvariant();
+                var uri = new Uri(origin);
+                var host = uri.Host.ToLowerInvariant();
+                if (uri.Scheme == "https" && (host == "potegni.me" || host == "www.potegni.me" || host.EndsWith(".potegni.me")))
+                    return true;
                 if (host == "potegni.me") return true;
                 // allow any subdomain of frontend (e.g. ab027615.potegnime-angular.pages.dev)
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
