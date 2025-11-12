@@ -85,7 +85,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             {
                 var uri = new Uri(origin);
                 var host = uri.Host.ToLowerInvariant();
-                
+                Console.WriteLine($"CORS origin check: {origin} => host: {host}");
                 if (uri.Scheme == "https" && (host == "potegni.me" || host == "www.potegni.me" || host.EndsWith(".potegni.me"))) return true;
                 if (host == "potegni.me") return true;
 
@@ -96,6 +96,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             }
             catch
             {
+                Console.WriteLine($"EXCEPTION: CORS origin check: {origin} => invalid origin");
                 // invalid origin => deny
             }
             return false;
