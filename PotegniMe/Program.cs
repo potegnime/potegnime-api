@@ -85,7 +85,6 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             {
                 var uri = new Uri(origin);
                 var host = uri.Host.ToLowerInvariant();
-                Console.WriteLine($"CORS origin check: {origin} => host: {host}");
                 if (uri.Scheme == "https" && (host == "potegni.me" || host == "www.potegni.me" || host.EndsWith(".potegni.me"))) return true;
                 if (host == "potegni.me") return true;
 
@@ -94,10 +93,11 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 if (host.EndsWith(".pages.dev")) return true;
                 if (builder.Environment.IsDevelopment() && host == "localhost") return true;
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine($"EXCEPTION: CORS origin check: {origin} => invalid origin");
                 // invalid origin => deny
+                Console.WriteLine($"EXCEPTION_CORS:\nOrigin:{origin}\nException:{ex.Message}"); // TODO - observability
+                return false;
             }
             return false;
         })
