@@ -36,10 +36,10 @@ API runs on http://localhost:5194. Swagger is available at http://localhost:5194
 
 ## Deployment
 
-Deployed on [Render](https://render.com/). Currently on a free tier (0.1 CPU, 512MB RAM) - this is the main reason app is so slow at the moment. Plan is to migrate to AWS/solid on-prem server soon.
+For deployment info consult internal [potegnime-wiki](https://github.com/potegnime/potegnime-wiki)
 
-## Folder structure
-
+If you want to try out the production build locally run:
 ```
-TODO
+dotnet publish -c Release -o potegnime-api/publish
+dotnet potegnime-api/publish/Potegnime.dll --urls "http://127.0.0.1:5194"
 ```
