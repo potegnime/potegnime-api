@@ -15,7 +15,7 @@ namespace PotegniMe.Controllers
         [HttpGet, AllowAnonymous]
         public async Task<ActionResult> Ping()
         {
-            return StatusCode(200, "apii" );
+            return StatusCode(200, "api" );
         }
     }
 }
