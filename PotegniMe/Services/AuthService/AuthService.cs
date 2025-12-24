@@ -217,7 +217,7 @@ namespace PotegniMe.Services.AuthService
 
             JwtSecurityToken token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddDays(30),
+                expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: creds,
                 issuer: _configuration.GetSection("AppSettings:Issuer").Value,
                 audience: _configuration.GetSection("AppSettings:Audience").Value
