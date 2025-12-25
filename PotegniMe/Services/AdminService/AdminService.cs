@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using PotegniMe.Services.EmailService;
+﻿using PotegniMe.Services.EmailService;
 using PotegniMe.Services.UserService;
 
 namespace PotegniMe.Services.AdminService
@@ -22,11 +21,11 @@ namespace PotegniMe.Services.AdminService
         }
 
         // Methods
-        public async Task UpdateRole(Claim claim, string roleName)
+        public async Task UpdateRole(string username, string roleName)
         {
             Role role = _context.Role.FirstOrDefault(r => r.Name == roleName) ??
                 throw new ArgumentException("Role not found");
-            User user = await _userService.GetUserById(int.Parse(claim.Value));
+            User user = await _userService.GetUserByUsername(username);
             user.Role = role;
             user.RoleId = role.RoleId;
             await _context.SaveChangesAsync();

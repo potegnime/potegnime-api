@@ -26,14 +26,11 @@ namespace PotegniMe.Controllers
         public async Task<ActionResult<Recommendation>> SetRecommendation([FromBody] Recommendation recommendation)
         {
             // Check if user is admin
-            var userId = User.FindFirstValue("uid");
-            if (userId == null) return Unauthorized();
+            var username = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(Convert.ToInt32(userId)))
-            {
-                return Unauthorized();
-            }
-
+            if (!await _userService.IsAdmin(username)) return Unauthorized("Samo admin lahko nastavi film/serijo dneva");
+            
             try
             {
                 recommendation.Type = recommendation.Type.ToLower();

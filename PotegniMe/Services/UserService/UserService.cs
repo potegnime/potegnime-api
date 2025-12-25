@@ -1,20 +1,15 @@
-﻿using System.Security.Claims;
-using PotegniMe.Services.FileService;
-
-namespace PotegniMe.Services.UserService
+﻿namespace PotegniMe.Services.UserService
 {
     public class UserService : IUserService
     {
         // Fields
         private readonly DataContext _context;
-        private readonly IFileService _fileService;
         private readonly IConfiguration _configuration;
 
         // Constructor
-        public UserService(DataContext context, IFileService fileService, IConfiguration configuration)
+        public UserService(DataContext context, IConfiguration configuration)
         {
             _context = context;
-            _fileService = fileService;
             _configuration = configuration;
         }
 
@@ -71,88 +66,41 @@ namespace PotegniMe.Services.UserService
         }
 
         // User based methods
-        public async Task UpdateUsername(Claim claim, string username)
+        public async Task UpdateUsername(string oldUsername, string newUsername)
         {
-            // Input formatting - nothing can end with a trailing space
-            username = username.Trim().ToLower();
+            // formatting - nothing can end with a trailing space
+            oldUsername = oldUsername.Trim().ToLower();
+            newUsername = newUsername.Trim().ToLower();
 
             // Check if username is already taken
-            if (await _context.User.AnyAsync(u => u.Username == username))
+            if (await _context.User.AnyAsync(u => u.Username == newUsername))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom že obstaja!");
             }
 
-            var user = await GetUserById(int.Parse(claim.Value));
-            user.Username = username;
+            var user = await GetUserByUsername(oldUsername);
+            user.Username = newUsername;
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateEmail(Claim claim, string email)
+        public async Task UpdateEmail(string oldEmail, string newEmail)
         {
             // Input formatting - nothing can end with a trailing space
-            email = email.Trim().ToLower();
+            newEmail = newEmail.Trim().ToLower();
 
             // Check if email is already taken
-            if (await _context.User.AnyAsync(u => u.Email == email))
+            if (await _context.User.AnyAsync(u => u.Email == newEmail))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem e-poštnim naslovom že obstaja!");
             }
 
             // Update email
-            var user = await GetUserById(int.Parse(claim.Value));
-            user.Email = email;
+            var user = await GetUserByEmail(oldEmail);
+            user.Email = newEmail;
             await _context.SaveChangesAsync();
         }
 
-        public async Task<(Stream, string)> GetPfpStreamWithMime(int userId)
-        {
-            // Get needed data from appsettings.json
-            string? storageFilePath = _configuration["FileSystem:ProfilePics"];
-
-            if (storageFilePath == null)
-            {
-                throw new Exception("Cannot access internal file storage data!");
-            }
-
-            // Find the profile picture file name (same as user id)
-            var user = await GetUserById(userId);
-            string pfpFilePath = user.ProfilePicFilePath;
-            if (pfpFilePath == null)
-            {
-                // User doesn't have a profile picture, return null
-                return (null, null);
-            }
-            string fullPfpFilePath = $"{storageFilePath}/{pfpFilePath}";
-
-            var fileStream = new FileStream(fullPfpFilePath, FileMode.Open, FileAccess.Read);
-            string mimeType = _fileService.GetMimeType(fullPfpFilePath);
-            return (fileStream, mimeType);
-        }
-
-        public async Task<string> GetPfpBase64(int userId)
-        {
-            // Get needed data from appsettings.json
-            string? storageFilePath = _configuration["FileSystem:ProfilePics"];
-
-            if (storageFilePath == null)
-            {
-                throw new Exception("Cannot access internal file storage data!");
-            }
-
-            // Find the profile picture file name (same as user id)
-            var user = await GetUserById(userId);
-            string pfpFilePath = user.ProfilePicFilePath;
-            if (pfpFilePath == null)
-            {
-                // User doesn't have a profile picture, return null
-                return null;
-            }
-            string fullPfpFilePath = $"{storageFilePath}/{pfpFilePath}";
-
-            return _fileService.ConvertFileToBase64(fullPfpFilePath, FileSystemFileType.ProfileImage);
-        }
-
-        public async Task UpdatePfp(Claim claim, IFormFile profilePicture)
+        public async Task UpdatePfp(string username, IFormFile profilePicture)
         {
             // Get needed data from appsettings.json
             var supportedFormats = _configuration.GetSection("FileSystem:SupportedImageFormats").Get<string[]>();
@@ -180,17 +128,15 @@ namespace PotegniMe.Services.UserService
                 throw new ArgumentException("Naložena datoteka je prevelika. Največa velikost datoteke je 5MB!");
             }
 
-            // Rename image to match user id
-            var user = await GetUserById(int.Parse(claim.Value));
-            int userId = user.UserId;
-            string profilePicFilePath = $"{userId}{fileExtension}";
+            User user = await GetUserByUsername(username);
+            string profilePicFilePath = $"{username}{fileExtension}";
             string fullProfilePicFilePath = $"{storageFilePath}/{profilePicFilePath}";
 
             // Delete current profile picture, if exists
-            var existingFiles = Directory.GetFiles(storageFilePath, $"{userId}.*");
+            var existingFiles = Directory.GetFiles(storageFilePath, $"{username}.*");
             foreach (var file in existingFiles)
             {
-                if (Path.GetFileNameWithoutExtension(file).Equals(Convert.ToString(userId), StringComparison.OrdinalIgnoreCase))
+                if (Path.GetFileNameWithoutExtension(file).Equals(username, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(file);
                 }
@@ -207,7 +153,7 @@ namespace PotegniMe.Services.UserService
             await _context.SaveChangesAsync();
         }
 
-        public async Task RemovePfp(Claim claim)
+        public async Task RemovePfp(string username)
         {
             // Get needed data from appsettings.json
             string? storageFilePath = _configuration["FileSystem:ProfilePics"];
@@ -218,7 +164,7 @@ namespace PotegniMe.Services.UserService
             }
 
             // Delete profile picture - name like userId.*
-            var user = await GetUserById(int.Parse(claim.Value));
+            var user = await GetUserByUsername(username);
             int userId = user.UserId;
             // Delete current profile picture, if exists
             var existingFiles = Directory.GetFiles(storageFilePath, $"{userId}.*");
@@ -235,7 +181,7 @@ namespace PotegniMe.Services.UserService
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdatePassword(Claim claim, string password)
+        public async Task UpdatePassword(string username, string password)
         {
             // Input validation
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Geslo ne sme biti prazno!");
@@ -244,7 +190,7 @@ namespace PotegniMe.Services.UserService
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, salt);
 
             // Update password and password salt
-            var user = await GetUserById(int.Parse(claim.Value));
+            var user = await GetUserByUsername(username);
             user.PasswordHash = hashedPassword;
             user.PasswordSalt = salt;
             await _context.SaveChangesAsync();
@@ -273,19 +219,19 @@ namespace PotegniMe.Services.UserService
             return user;
         }
 
-        public async Task<Role> GetUserRole(int userId)
+        public async Task<Role> GetUserRole(string username)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
-                throw new Exception("Uporabnik s tem Id ne obstaja!");
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
+                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             // Load role relation
             _context.Entry(user).Reference(x => x.Role).Load();
 
             return user.Role;
         }
 
-        public async Task<bool> IsAdmin(int userId)
+        public async Task<bool> IsAdmin(string username)
         {
-            Role role = await GetUserRole(userId);
+            Role role = await GetUserRole(username);
 
             if (role.Name.ToLower() == "admin")
             {
@@ -294,9 +240,9 @@ namespace PotegniMe.Services.UserService
             return false;
         }
 
-        public async Task<bool> IsUploader(int userId)
+        public async Task<bool> IsUploader(string username)
         {
-            Role role = await GetUserRole(userId);
+            Role role = await GetUserRole(username);
 
             if (role.Name.ToLower() == "uploader")
             {
@@ -305,9 +251,9 @@ namespace PotegniMe.Services.UserService
             return false;
         }
 
-        public async Task DeleteUser(int userId)
+        public async Task DeleteUser(string username)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
+            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new Exception("Uporabnik s tem Id ne obstaja!");
             _context.User.Remove(user);
             await _context.SaveChangesAsync();
@@ -317,7 +263,7 @@ namespace PotegniMe.Services.UserService
         {
             // TODO - db lookup
             // No request found -> return null
-            return (RoleRequestStatus)new Random().Next(0, 3); ;
+            return (RoleRequestStatus)new Random().Next(0, 3);
         }
     }
 }

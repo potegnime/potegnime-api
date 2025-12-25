@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using PotegniMe.DTOs.Auth;
-using PotegniMe.DTOs.Error;
 using PotegniMe.Services.AuthService;
 
 namespace PotegniMe.Controllers
@@ -69,13 +67,11 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                var userId = User.FindFirstValue("uid");
-                if (userId == null)
-                {
-                    return Unauthorized("loolll");
-                }
+                var username = User.FindFirstValue("username");
+                if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+                
                 // Generate token
-                var token = await _authService.GenerateJwtToken(Convert.ToInt32(userId));
+                var token = await _authService.GenerateJwtToken(username);
                 return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch

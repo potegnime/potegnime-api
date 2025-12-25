@@ -29,14 +29,14 @@ namespace PotegniMe.Services.AuthService
         }
 
         // Methods
-        public async Task<string> GenerateJwtToken(int userId)
+        public async Task<string> GenerateJwtToken(string username)
         {
-            if (!await _userService.UserExists(userId))
+            if (!await _userService.UserExists(username))
             {
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
             }
 
-            User user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
+            User user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             return GenerateJwtTokenString(user);
@@ -202,8 +202,7 @@ namespace PotegniMe.Services.AuthService
                 new Claim("username", user.Username.ToString()),
                 new Claim("email", user.Email.ToString()),
                 new Claim("role", user.Role.Name.ToString().ToLower()),
-                new Claim("joined", user.JoinedDate.ToString()),
-                new Claim("hasPfp", "false") // TEMP - users don't have PFP, no storage implemented yet
+                new Claim("joined", user.JoinedDate.ToString())
             };
 
             RoleRequestStatus? uploaderRequestStatus = _userService.GetRoleRequestStatus(user.UserId);

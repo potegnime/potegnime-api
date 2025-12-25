@@ -3,7 +3,7 @@
     public interface IAuthService
     {
         // Generate JWT
-        Task<string> GenerateJwtToken(int userId);
+        Task<string> GenerateJwtToken(string username);
 
         // Register user
         Task<string> RegisterAsync(UserRegisterDto user);
