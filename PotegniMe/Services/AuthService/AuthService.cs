@@ -162,9 +162,9 @@ namespace PotegniMe.Services.AuthService
                 // Do not throw an exception, as this would allow for checking if email exists in the database
                 return;
             }
-            catch (SendGridLimitExcpetion)
+            catch (SendGridLimitException)
             {
-                throw new SendGridLimitExcpetion();
+                throw new SendGridLimitException();
             }
         }
 

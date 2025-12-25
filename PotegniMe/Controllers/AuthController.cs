@@ -93,7 +93,7 @@ namespace PotegniMe.Controllers
                 await _authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
             }
-            catch (SendGridLimitExcpetion)
+            catch (SendGridLimitException)
             {
                 return StatusCode(429, new ErrorResponseDto { ErrorCode = 1, Message = "SendGrid limit exceeded" });
             }
