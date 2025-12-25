@@ -13,7 +13,6 @@ using System.Text;
 using PotegniMe.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PotegniMe.Services.SearchService;
 using PotegniMe.Services.FileService;
 using PotegniMe.Services.RecommendService;
 using PotegniMe.Services.EmailService;
@@ -69,7 +68,6 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
-builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -83,16 +81,19 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             if (string.IsNullOrEmpty(origin)) return true; // non-browser or same-origin requests
             try
             {
-                var host = new Uri(origin).Host.ToLowerInvariant();
-                if (host == "potegni.me") return true;
+                var uri = new Uri(origin);
+                var host = uri.Host.ToLowerInvariant();
+                if (uri.Scheme == "https" && (host == "potegni.me" || host == "www.potegni.me" || host.EndsWith(".potegni.me"))) return true;
+    
                 // allow any subdomain of frontend (e.g. ab027615.potegnime-angular.pages.dev)
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
-                if (host.EndsWith(".pages.dev")) return true;
                 if (builder.Environment.IsDevelopment() && host == "localhost") return true;
             }
-            catch
+            catch (Exception ex)
             {
                 // invalid origin => deny
+                Console.WriteLine($"EXCEPTION_CORS:\nOrigin:{origin}\nException:{ex.Message}"); // TODO - observability
+                return false;
             }
             return false;
         })
