@@ -31,15 +31,15 @@ var issuer = builder.Configuration["AppSettings:Issuer"];
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new()
+    options.SwaggerDoc("v1", new()
     {
-        Title = "PotegniMe API",
+        Title = "potegnime API",
         Version = "v1"
     });
 
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
@@ -49,7 +49,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Paste JWT here (without Bearer prefix)"
     });
 
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
             new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -64,7 +64,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
