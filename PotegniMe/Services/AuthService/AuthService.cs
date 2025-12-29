@@ -195,6 +195,7 @@ namespace PotegniMe.Services.AuthService
         private string GenerateJwtTokenString(User user)
         {
             _context.Entry(user).Reference(u => u.Role).Load();
+            bool hasPfp = user.ProfilePicFilePath != null;
 
             List<Claim> claims = new List<Claim>
             {
@@ -202,14 +203,9 @@ namespace PotegniMe.Services.AuthService
                 new Claim("username", user.Username.ToString()),
                 new Claim("email", user.Email.ToString()),
                 new Claim("role", user.Role.Name.ToString().ToLower()),
-                new Claim("joined", user.JoinedDate.ToString())
+                new Claim("joined", user.JoinedDate.ToString()),
+                new Claim("hasPfp", hasPfp ? "true" : "false")
             };
-
-            RoleRequestStatus? uploaderRequestStatus = _userService.GetRoleRequestStatus(user.UserId);
-            if (uploaderRequestStatus is RoleRequestStatus status)
-            {
-                claims.Add(new Claim("uploaderRequestStatus", status.ToString().ToLower()));
-            }
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appKey));
             SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);

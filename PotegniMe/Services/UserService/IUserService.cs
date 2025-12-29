@@ -16,7 +16,7 @@
         Task UpdateUsername(string oldUsername, string newUsername);
 
         // Update user email
-        Task UpdateEmail(string oldEmail, string newEmail);
+        Task UpdateEmail(string username, string newEmail);
 
         // Update user pfp
         Task UpdatePfp(string username, IFormFile profilePicture);

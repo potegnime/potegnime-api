@@ -8,26 +8,17 @@ namespace PotegniMe.Controllers
 {
     [Route("user")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(
+        IUserService userService, 
+        IAuthService authService
+    ) : ControllerBase
     {
-        // Fields
-        private readonly IUserService _userService;
-        private readonly IAuthService _authService;
-
-        // Constructor
-        public UserController(IUserService userService, IAuthService authService)
-        {
-            _userService = userService;
-            _authService = authService;
-        }
-
-        // Routes
         [HttpGet("userId"), Authorize]
         public async Task<ActionResult> GetUser(int userId)
         {
             try
             {
-                User user = await _userService.GetUserById(userId);
+                User user = await userService.GetUserById(userId);
                 return Ok(new GetUser
                 {
                     Username = user.Username,
@@ -51,7 +42,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                User user = await _userService.GetUserByUsername(username);
+                User user = await userService.GetUserByUsername(username);
                 return Ok(new GetUser
                 {
                     Username = user.Username,
@@ -71,7 +62,7 @@ namespace PotegniMe.Controllers
         }
 
         [HttpPost("updateUser"), Authorize]
-        public async Task<ActionResult> UpdateUser([FromBody] UpdateUserDto updateUserDto)
+        public async Task<ActionResult<string>> UpdateUser([FromBody] UpdateUserDto updateUserDto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             
@@ -88,8 +79,7 @@ namespace PotegniMe.Controllers
             var newUsername = updateUserDto.Username?.Trim();
             var newEmail = updateUserDto.Email?.Trim();
             
-            if (!string.IsNullOrEmpty(newUsername) &&
-                string.Equals(username, newUsername, StringComparison.Ordinal))
+            if (!string.IsNullOrEmpty(newUsername) && string.Equals(username, newUsername, StringComparison.Ordinal))
             {
                 return Conflict(new ErrorResponseDto { ErrorCode = 1, Message = "Novo uporabniško ime ne sme biti enako prejšnjemu!" });
             }
@@ -102,9 +92,12 @@ namespace PotegniMe.Controllers
             
             try
             {
-                if (!string.IsNullOrEmpty(newEmail))  await _userService.UpdateEmail(username, newEmail);
-                if (!string.IsNullOrEmpty(newUsername))  await _userService.UpdateUsername(username, newUsername);
-                return Ok();
+                if (!string.IsNullOrEmpty(newEmail)) await userService.UpdateEmail(username, newEmail);
+                if (!string.IsNullOrEmpty(newUsername)) await userService.UpdateUsername(username, newUsername);
+                
+                // return new JWT (with new username/email)
+                string token = await authService.GenerateJwtToken(newUsername ?? username);
+                return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch (ConflictExceptionDto e)
             {
@@ -116,8 +109,8 @@ namespace PotegniMe.Controllers
             }
         }
         
-        [HttpPost("updatePfp"), Authorize]
-        public async Task<ActionResult> UpdatePfp([FromForm] UpdatePfpDto updatePfpDto)
+        [HttpPost("setPfp"), Authorize]
+        public async Task<ActionResult<string>> UpdatePfp([FromForm] UpdatePfpDto updatePfpDto)
         {
             try
             {
@@ -129,13 +122,19 @@ namespace PotegniMe.Controllers
                 if (updatePfpDto.ProfilePicFile == null)
                 {
                     // Remove profile picture
-                    await _userService.RemovePfp(username);
-                    return Ok();
+                    await userService.RemovePfp(username);
+                    return Ok(new JwtTokenResponseDto
+                    {
+                        Token = await authService.GenerateJwtToken(username)
+                    });
                 }
                 // Update profile picture
-                await _userService.UpdatePfp(username, updatePfpDto.ProfilePicFile);
-                return Ok();
+                await userService.UpdatePfp(username, updatePfpDto.ProfilePicFile);
                 
+                return Ok(new JwtTokenResponseDto
+                {
+                    Token = await authService.GenerateJwtToken(username)
+                });
             }
             catch (Exception e)
             {
@@ -159,13 +158,13 @@ namespace PotegniMe.Controllers
                 }
 
                 // Verify the old password is correct
-                if (!await _authService.VerifyLogin(username, updatePasswordDto.OldPassword))
+                if (!await authService.VerifyLogin(username, updatePasswordDto.OldPassword))
                 {
                     return StatusCode(403, new ErrorResponseDto { ErrorCode = 1, Message = "Staro geslo ni pravilno!" });
 
                 }
 
-                await _userService.UpdatePassword(username, updatePasswordDto.NewPassword);
+                await userService.UpdatePassword(username, updatePasswordDto.NewPassword);
                 return Ok();
             }
             catch (Exception e)
@@ -189,12 +188,12 @@ namespace PotegniMe.Controllers
                 if (username == null) return Unauthorized();
 
                 // Verify password
-                if (!await _authService.VerifyLogin(username, deleteUserDto.Password))
+                if (!await authService.VerifyLogin(username, deleteUserDto.Password))
                 {
                     return StatusCode(403, new ErrorResponseDto { ErrorCode = 1, Message = "Geslo ni pravilno" });
                 }
 
-                await _userService.DeleteUser(username);
+                await userService.DeleteUser(username);
                 return Ok();
             }
             catch (Exception e)
@@ -227,7 +226,7 @@ namespace PotegniMe.Controllers
             try
             {
                 // Check if user is already uploader or admin
-                if (await _userService.IsUploader(username) || await _userService.IsAdmin(username))
+                if (await userService.IsUploader(username) || await userService.IsAdmin(username))
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Uporabnik je že uploader ali admin!" });
                 }

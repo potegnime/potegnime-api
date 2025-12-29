@@ -125,7 +125,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             catch (Exception ex)
             {
                 // invalid origin => deny
-                Console.WriteLine($"EXCEPTION_CORS:\nOrigin:{origin}\nException:{ex.Message}"); // TODO - observability
+                // TODO - observability
                 return false;
             }
             return false;

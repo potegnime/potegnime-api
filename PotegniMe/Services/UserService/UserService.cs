@@ -83,7 +83,7 @@
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateEmail(string oldEmail, string newEmail)
+        public async Task UpdateEmail(string username, string newEmail)
         {
             // Input formatting - nothing can end with a trailing space
             newEmail = newEmail.Trim().ToLower();
@@ -95,7 +95,7 @@
             }
 
             // Update email
-            var user = await GetUserByEmail(oldEmail);
+            var user = await GetUserByUsername(username);
             user.Email = newEmail;
             await _context.SaveChangesAsync();
         }
