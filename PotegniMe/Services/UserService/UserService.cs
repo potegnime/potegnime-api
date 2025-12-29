@@ -143,6 +143,28 @@
             await context.SaveChangesAsync();
         }
 
+        public async Task RenamePfp(string oldUsername, string newUsername)
+        {
+            string? storageFilePath = configuration["FileSystem:ProfilePics"];
+            if (string.IsNullOrEmpty(storageFilePath)) throw new Exception("Cannot access internal file storage data!");
+
+            var user = await GetUserByUsername(newUsername);
+
+            var existingFiles = Directory.GetFiles(storageFilePath, $"{oldUsername}.*");
+            if (existingFiles.Length == 0) return;
+
+            // Rename the file
+            foreach (var oldFilePath in existingFiles)
+            {
+                string extension = Path.GetExtension(oldFilePath);
+                string newFilePath = Path.Combine(storageFilePath, $"{newUsername}{extension}");
+                File.Move(oldFilePath, newFilePath);
+                user.ProfilePicFilePath = $"{newUsername}{extension}";
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         public async Task RemovePfp(string username)
         {
             // Get needed data from appsettings.json

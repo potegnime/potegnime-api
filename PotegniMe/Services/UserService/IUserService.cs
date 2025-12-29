@@ -20,6 +20,9 @@
 
         // Update user pfp
         Task UpdatePfp(string username, IFormFile profilePicture);
+        
+        // Rename user pfp
+        Task RenamePfp(string oldUsername, string newUsername);
 
         // Remove user pfp
         Task RemovePfp(string username);

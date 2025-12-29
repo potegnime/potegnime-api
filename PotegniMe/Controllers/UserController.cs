@@ -66,7 +66,12 @@ namespace PotegniMe.Controllers
             try
             {
                 if (!string.IsNullOrEmpty(newEmail)) await userService.UpdateEmail(username, newEmail);
-                if (!string.IsNullOrEmpty(newUsername)) await userService.UpdateUsername(username, newUsername);
+                if (!string.IsNullOrEmpty(newUsername))
+                {
+                    await userService.UpdateUsername(username, newUsername);
+                    // update pfp as well - pfp name is username (https://api.potegni.me/pfp/username)
+                    await userService.RenamePfp(username, newUsername);
+                }
                 
                 // return new JWT (with new username/email)
                 string token = await authService.GenerateJwtToken(newUsername ?? username);
