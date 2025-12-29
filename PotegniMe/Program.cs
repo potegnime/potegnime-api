@@ -122,7 +122,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
                 if (builder.Environment.IsDevelopment() && host == "localhost") return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // invalid origin => deny
                 // TODO - observability

@@ -1,13 +1,9 @@
-﻿using PotegniMe.Services.EmailService;
-using PotegniMe.Services.UserService;
+﻿using PotegniMe.Services.UserService;
 
 namespace PotegniMe.Services.AdminService
 {
-    public class AdminService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration) : IAdminService
+    public class AdminService(DataContext context, IUserService userService) : IAdminService
     {
-        // Fields
-        public readonly IConfiguration _configuration = configuration;
-
         // Methods
         public async Task UpdateRole(string username, string roleName)
         {
@@ -18,7 +14,5 @@ namespace PotegniMe.Services.AdminService
             user.RoleId = role.RoleId;
             await context.SaveChangesAsync();
         }
-
-        // Helper methods
     }
 }

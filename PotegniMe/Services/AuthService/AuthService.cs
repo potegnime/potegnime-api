@@ -187,10 +187,10 @@ namespace PotegniMe.Services.AuthService
             List<Claim> claims = new List<Claim>
             {
                 new Claim("uid", user.UserId.ToString()),
-                new Claim("username", user.Username.ToString()),
-                new Claim("email", user.Email.ToString()),
-                new Claim("role", user.Role.Name.ToString().ToLower()),
-                new Claim("joined", user.JoinedDate.ToString()),
+                new Claim("username", user.Username),
+                new Claim("email", user.Email),
+                new Claim("role", user.Role.Name.ToLower()),
+                new Claim("joined", user.JoinedDate.ToString("O", CultureInfo.InvariantCulture)),
                 new Claim("hasPfp", hasPfp ? "true" : "false")
             };
 
