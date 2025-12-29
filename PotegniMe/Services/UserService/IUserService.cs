@@ -26,10 +26,7 @@
 
         // Update user password
         Task UpdatePassword(string username, string newPassword);
-
-        // Get user by id
-        Task<User> GetUserById(int userId);
-
+        
         // Get user by username
         Task<User> GetUserByUsername(string username);
 

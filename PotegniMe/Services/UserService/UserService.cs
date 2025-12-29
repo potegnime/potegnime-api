@@ -196,14 +196,6 @@
             await _context.SaveChangesAsync();
         }
 
-        public async Task<User> GetUserById(int userId)
-        {
-            User user = await _context.User
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserId == userId) ?? throw new NotFoundException();
-            return user;
-        }
-
         public async Task<User> GetUserByUsername(string username)
         {
             User user = await _context.User

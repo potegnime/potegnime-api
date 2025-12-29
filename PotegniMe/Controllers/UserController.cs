@@ -13,30 +13,6 @@ namespace PotegniMe.Controllers
         IAuthService authService
     ) : ControllerBase
     {
-        [HttpGet("userId"), Authorize]
-        public async Task<ActionResult> GetUser(int userId)
-        {
-            try
-            {
-                User user = await userService.GetUserById(userId);
-                return Ok(new GetUser
-                {
-                    Username = user.Username,
-                    Joined = user.JoinedDate.Date.ToShortDateString(),
-                    Role = Convert.ToString(user.Role.Name),
-                    HasPfp = user.ProfilePicFilePath != null
-                });
-            }
-            catch (NotFoundException)
-            {
-                return NotFound();
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
-        }
-
         [HttpGet("username"), Authorize]
         public async Task<ActionResult> GetUser(string username)
         {
