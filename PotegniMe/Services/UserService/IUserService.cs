@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-
-namespace PotegniMe.Services.UserService
+﻿namespace PotegniMe.Services.UserService
 {
     public interface IUserService
     {
@@ -15,29 +13,20 @@ namespace PotegniMe.Services.UserService
 
         // User based methods
         // Update user username
-        Task UpdateUsername(Claim claim, string username);
+        Task UpdateUsername(string oldUsername, string newUsername);
 
         // Update user email
-        Task UpdateEmail(Claim claim, string email);
-
-        // Get user pfp stream with mime
-        Task<(Stream, string)> GetPfpStreamWithMime(int userId);
-
-        // Get user pfp in base 64
-        Task<string> GetPfpBase64(int userId);
+        Task UpdateEmail(string username, string newEmail);
 
         // Update user pfp
-        Task UpdatePfp(Claim claim, IFormFile profilePicture);
+        Task UpdatePfp(string username, IFormFile profilePicture);
 
         // Remove user pfp
-        Task RemovePfp(Claim claim);
+        Task RemovePfp(string username);
 
         // Update user password
-        Task UpdatePassword(Claim claim, string newPassword);
-
-        // Get user by id
-        Task<User> GetUserById(int userId);
-
+        Task UpdatePassword(string username, string newPassword);
+        
         // Get user by username
         Task<User> GetUserByUsername(string username);
 
@@ -45,16 +34,16 @@ namespace PotegniMe.Services.UserService
         Task<User> GetUserByEmail(string email);
 
         // Get user role
-        Task<Role> GetUserRole(int userId);
+        Task<Role> GetUserRole(string username);
 
         // Check if user is admin
-        Task<bool> IsAdmin(int userId);
+        Task<bool> IsAdmin(string username);
 
         // Check if user is uploader
-        Task<bool> IsUploader (int userId);
+        Task<bool> IsUploader (string username);
 
         // Delete user
-        Task DeleteUser(int userId);
+        Task DeleteUser(string username);
 
         // Get uploader request status
         RoleRequestStatus? GetRoleRequestStatus(int userId);

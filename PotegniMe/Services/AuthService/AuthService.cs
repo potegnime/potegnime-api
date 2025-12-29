@@ -8,35 +8,22 @@ using PotegniMe.Services.UserService;
 
 namespace PotegniMe.Services.AuthService
 {
-    public class AuthService : IAuthService
+    public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration) : IAuthService
     {
         // Fields
-        public readonly IConfiguration _configuration;
-        private readonly DataContext _context;
-        private readonly IUserService _userService;
-        private readonly IEmailService _emailService;
-        private readonly String _appKey;
-
-        // Constructor
-        public AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration)
-        {
-            _context = context;
-            _userService = userService;
-            _emailService = emailService;
-            _configuration = configuration;
-            _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
+        public readonly IConfiguration _configuration = configuration;
+        private readonly String _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
                       throw new Exception("Cannot find TMDB API KEY");
-        }
 
         // Methods
-        public async Task<string> GenerateJwtToken(int userId)
+        public async Task<string> GenerateJwtToken(string username)
         {
-            if (!await _userService.UserExists(userId))
+            if (!await userService.UserExists(username))
             {
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
             }
 
-            User user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId) ??
+            User user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             return GenerateJwtTokenString(user);
@@ -57,14 +44,14 @@ namespace PotegniMe.Services.AuthService
             request.Password = request.Password.Trim();
 
             // Check if user exists
-            if (await _userService.UserExists(request.Username, request.Email))
+            if (await userService.UserExists(request.Username, request.Email))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom ali e-poštnim naslovom že obstaja!");
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
 
-            Role role = _context.Role.FirstOrDefault(r => r.Name == "user") ??
+            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
                 throw new ArgumentException("Role not found");
             User newUser = new User
             {
@@ -78,10 +65,10 @@ namespace PotegniMe.Services.AuthService
                 Role = role
             };
             // Add new user instance to the database
-            _context.User.Add(newUser);
-            await _context.SaveChangesAsync();
+            context.User.Add(newUser);
+            await context.SaveChangesAsync();
             // Save changes to the database
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return GenerateJwtTokenString(newUser);
         }
 
@@ -98,13 +85,13 @@ namespace PotegniMe.Services.AuthService
             request.Password = request.Password.Trim();
 
             // Check if user exists
-            if (!await _userService.UserExists(request.Username))
+            if (!await userService.UserExists(request.Username))
             {
                 throw new ArgumentException("Napačno uporabniško ime ali geslo!");
             }
 
             // Get user by username
-            User user = await _userService.GetUserByUsername(request.Username);
+            User user = await userService.GetUserByUsername(request.Username);
 
             // Check if password is correct
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -119,7 +106,7 @@ namespace PotegniMe.Services.AuthService
         public async Task<bool> VerifyLogin(string username, string password)
         {
             // Get user by username
-            User user = await _userService.GetUserByUsername(username);
+            User user = await userService.GetUserByUsername(username);
 
             if (user == null) return false;
 
@@ -135,14 +122,14 @@ namespace PotegniMe.Services.AuthService
             try
             {
                 string userEmail = forgotPasswordDto.Email.Trim().ToLower();
-                User user = await _userService.GetUserByEmail(userEmail);
+                User user = await userService.GetUserByEmail(userEmail);
                 // Generate reset token
                 string token = GeneratePasswordResetToken();
 
                 // Save token to the database
                 user.PasswordResetToken = token;
                 user.PasswordResetTokenExpiration = DateTime.UtcNow.AddHours(1);
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 // Send email
                 string baseUrl = _configuration["AppSettings:Audience"] ??
@@ -154,7 +141,7 @@ namespace PotegniMe.Services.AuthService
                 { "username", user.Username.ToString() },
                 { "reset_link", $"{baseUrl}ponastavi-geslo?token={token}" }
             };
-                await _emailService.SendEmailAsync(userEmail, templateData);
+                await emailService.SendEmailAsync(userEmail, templateData);
             }
             catch (NotFoundException)
             {
@@ -162,9 +149,9 @@ namespace PotegniMe.Services.AuthService
                 // Do not throw an exception, as this would allow for checking if email exists in the database
                 return;
             }
-            catch (SendGridLimitExcpetion)
+            catch (SendGridLimitException)
             {
-                throw new SendGridLimitExcpetion();
+                throw new SendGridLimitException();
             }
         }
 
@@ -174,7 +161,7 @@ namespace PotegniMe.Services.AuthService
             string newPassword = resetPasswordDto.Password;
 
             // Check token validity
-            User user = await _context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
+            User user = await context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
                 throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
             // Check if token is expired
@@ -187,14 +174,15 @@ namespace PotegniMe.Services.AuthService
             user.PasswordHash = HashPassword(newPassword, user.PasswordSalt);
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiration = null;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return GenerateJwtTokenString(user);
         }
 
         // Helper methods
         private string GenerateJwtTokenString(User user)
         {
-            _context.Entry(user).Reference(u => u.Role).Load();
+            context.Entry(user).Reference(u => u.Role).Load();
+            bool hasPfp = user.ProfilePicFilePath != null;
 
             List<Claim> claims = new List<Claim>
             {
@@ -203,14 +191,8 @@ namespace PotegniMe.Services.AuthService
                 new Claim("email", user.Email.ToString()),
                 new Claim("role", user.Role.Name.ToString().ToLower()),
                 new Claim("joined", user.JoinedDate.ToString()),
-                new Claim("hasPfp", "false") // TEMP - users don't have PFP, no storage implemented yet
+                new Claim("hasPfp", hasPfp ? "true" : "false")
             };
-
-            RoleRequestStatus? uploaderRequestStatus = _userService.GetRoleRequestStatus(user.UserId);
-            if (uploaderRequestStatus is RoleRequestStatus status)
-            {
-                claims.Add(new Claim("uploaderRequestStatus", status.ToString().ToLower()));
-            }
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appKey));
             SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);

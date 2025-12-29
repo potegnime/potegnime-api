@@ -1,9 +1,8 @@
 ﻿// TODO make sure roles are in the database on initialization - admin, user...
 namespace PotegniMe.Models
 {
-    public class DataContext : DbContext
+    public class DataContext(DbContextOptions<DataContext> opions) : DbContext(opions)
     {
-        public DataContext(DbContextOptions<DataContext> opions) : base(opions) { }
 
         // Tables
         public DbSet<User> User { get; set; }

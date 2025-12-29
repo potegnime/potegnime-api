@@ -8,32 +8,19 @@ namespace PotegniMe.Controllers
 {
     [Route("recommend")]
     [ApiController]
-    public class RecommnedController : ControllerBase
+    public class RecommendController(IRecommendService recommendService, IUserService userService) : ControllerBase
     {
-        // Fields
-        private readonly IRecommnedService _recommnedService;
-        private readonly IUserService _userService;
-
-        // Constructor
-        public RecommnedController(IRecommnedService recommnedService, IUserService userService)
-        {
-            _recommnedService = recommnedService;
-            _userService = userService;
-        }
 
         // Routes
         [HttpPost, Authorize]
         public async Task<ActionResult<Recommendation>> SetRecommendation([FromBody] Recommendation recommendation)
         {
             // Check if user is admin
-            var userId = User.FindFirstValue("uid");
-            if (userId == null) return Unauthorized();
+            var username = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(Convert.ToInt32(userId)))
-            {
-                return Unauthorized();
-            }
-
+            if (!await userService.IsAdmin(username)) return Unauthorized("Samo admin lahko nastavi film/serijo dneva");
+            
             try
             {
                 recommendation.Type = recommendation.Type.ToLower();
@@ -41,7 +28,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                Recommendation result = await _recommnedService.SetRecommendation(recommendation);
+                Recommendation result = await recommendService.SetRecommendation(recommendation);
                 return Ok(result);
             }
             catch (Exception e)
@@ -60,7 +47,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                Recommendation result = await _recommnedService.GetRecommendation(date, type);
+                Recommendation result = await recommendService.GetRecommendation(date, type);
                 return Ok(result);
             }
             catch (ArgumentException)
@@ -83,7 +70,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                await _recommnedService.DeleteRecommendation(date, type);
+                await recommendService.DeleteRecommendation(date, type);
                 return Ok();
             }
             catch (ArgumentException)
@@ -101,7 +88,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                Recommendation result = await _recommnedService.RandomRecommendation();
+                Recommendation result = await recommendService.RandomRecommendation();
                 return Ok(result);
             }
             catch (Exception e)
@@ -120,7 +107,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.NowPlaying(language, page, region);
+                var result = await recommendService.NowPlaying(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -139,7 +126,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.Popular(language, page, region);
+                var result = await recommendService.Popular(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -158,7 +145,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.TopRated(language, page, region);
+                var result = await recommendService.TopRated(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -177,7 +164,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.Upcoming(language, page, region);
+                var result = await recommendService.Upcoming(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -187,22 +174,16 @@ namespace PotegniMe.Controllers
         }
 
         [HttpGet("trendingMovie"), Authorize]
-        public async Task<ActionResult<List<TmdbTrendingResponse>>> TrendingMovie(string timeWindow, string language)
+        public async Task<ActionResult<List<TmdbTrendingResponse>>> TrendingMovie(string language)
         {
             try
             {
-                timeWindow = timeWindow.ToLower();
-                if (timeWindow != "day" && timeWindow != "week")
-                {
-                    return BadRequest();
-                }
-
                 if (language != "sl-SI" && language != "en-US")
                 {
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.TrendingMovie(timeWindow, language);
+                var result = await recommendService.TrendingMovie(language);
                 return Ok(result);
             }
             catch (Exception e)
@@ -212,22 +193,16 @@ namespace PotegniMe.Controllers
         }
 
         [HttpGet("trendingTv"), Authorize]
-        public async Task<ActionResult<List<TmdbTrendingResponse>>> TrendingTv(string timeWindow, string language)
+        public async Task<ActionResult<List<TmdbTrendingResponse>>> TrendingTv(string language)
         {
             try
             {
-                timeWindow = timeWindow.ToLower();
-                if (timeWindow != "day" && timeWindow != "week")
-                {
-                    return BadRequest();
-                }
-
                 if (language != "sl-SI" && language != "en-US")
                 {
                     return BadRequest();
                 }
 
-                var result = await _recommnedService.TrendingTv(timeWindow, language);
+                var result = await recommendService.TrendingTv(language);
                 return Ok(result);
             }
             catch (Exception e)

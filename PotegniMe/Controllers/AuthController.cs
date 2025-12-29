@@ -1,30 +1,19 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using PotegniMe.DTOs.Auth;
-using PotegniMe.DTOs.Error;
 using PotegniMe.Services.AuthService;
 
 namespace PotegniMe.Controllers
 {
     [Route("auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        // Fields
-        private readonly IAuthService _authService;
-
-        // Constructor
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
         [HttpPost("register"), AllowAnonymous]
         public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto userRegisterDto)
         {
             try
             {
-                string token = await _authService.RegisterAsync(userRegisterDto);
+                string token = await authService.RegisterAsync(userRegisterDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token= token });
             }
             catch (ArgumentException e)
@@ -49,7 +38,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                var token = await _authService.LoginAsync(userLoginDto);
+                var token = await authService.LoginAsync(userLoginDto);
                 return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch (ArgumentException e)
@@ -69,13 +58,11 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                var userId = User.FindFirstValue("uid");
-                if (userId == null)
-                {
-                    return Unauthorized("loolll");
-                }
+                var username = User.FindFirstValue("username");
+                if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+                
                 // Generate token
-                var token = await _authService.GenerateJwtToken(Convert.ToInt32(userId));
+                var token = await authService.GenerateJwtToken(username);
                 return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch
@@ -90,10 +77,10 @@ namespace PotegniMe.Controllers
             // TODO rate limit?
             try
             {
-                await _authService.ForgotPassword(forgotPasswordDto);
+                await authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
             }
-            catch (SendGridLimitExcpetion)
+            catch (SendGridLimitException)
             {
                 return StatusCode(429, new ErrorResponseDto { ErrorCode = 1, Message = "SendGrid limit exceeded" });
             }
@@ -112,7 +99,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                string jwt = await _authService.ResetPassword(resetPasswordDto);
+                string jwt = await authService.ResetPassword(resetPasswordDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
             }
             catch (InvalidTokenException e)

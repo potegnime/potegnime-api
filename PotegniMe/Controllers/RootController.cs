@@ -6,12 +6,6 @@ namespace PotegniMe.Controllers
     [ApiController]
     public class RootController : ControllerBase
     {
-
-        // Constructor
-        public RootController()
-        {
-        }
-
         [HttpGet, AllowAnonymous]
         public async Task<ActionResult> Root()
         {

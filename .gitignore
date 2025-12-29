@@ -1,9 +1,6 @@
-**/appsettings.Development.json
-/ProfilePics/
-wwwroot/images/profile-pics/
-
 .env
-
+**/appsettings.Development.json
+PotegniMe/wwwroot/images/profile-pics/
 
 
 ########################### Auto Generated ###########################

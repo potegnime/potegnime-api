@@ -31,6 +31,39 @@ var issuer = builder.Configuration["AppSettings:Issuer"];
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new()
+    {
+        Title = "potegnime API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Paste JWT here (without Bearer prefix)"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -69,7 +102,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IRecommnedService, RecommendService>();
+builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // CORS
@@ -92,7 +125,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             catch (Exception ex)
             {
                 // invalid origin => deny
-                Console.WriteLine($"EXCEPTION_CORS:\nOrigin:{origin}\nException:{ex.Message}"); // TODO - observability
+                // TODO - observability
                 return false;
             }
             return false;

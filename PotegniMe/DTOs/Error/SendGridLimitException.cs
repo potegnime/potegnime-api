@@ -1,8 +1,8 @@
 ﻿namespace PotegniMe.DTOs.Error
 {
-    public class SendGridLimitExcpetion : Exception
+    public class SendGridLimitException : Exception
     {
-        public SendGridLimitExcpetion()
+        public SendGridLimitException()
         {
         }
     }

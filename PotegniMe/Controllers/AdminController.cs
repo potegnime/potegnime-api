@@ -9,29 +9,20 @@ namespace PotegniMe.Controllers
 {
     [Route("admin")]
     [ApiController]
-    public class AdminController : ControllerBase
+    public class AdminController(
+        IAuthService authService,
+        IUserService userService, 
+        IAdminService adminService
+    ) : ControllerBase
     {
-        // Fields
-        private readonly IAuthService _authService;
-        private readonly IUserService _userService;
-        private readonly IAdminService _adminService;
-
-        // Constructor
-        public AdminController(IAuthService authService, IUserService userService, IAdminService adminService)
-        {
-            _authService = authService;
-            _userService = userService;
-            _adminService = adminService;
-        }
-
         [HttpPost("updateRole"), Authorize]
         public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
         {
             // Check if user is admin
-            var uid = User.FindFirstValue("uid");
-            if (uid == null) return Unauthorized();
+            var username = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(Convert.ToInt32(uid)))
+            if (!await userService.IsAdmin(username))
             {
                 return Unauthorized();
             }
@@ -48,8 +39,7 @@ namespace PotegniMe.Controllers
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
                 }
 
-                Claim claim = new Claim("uid", Convert.ToString(updateRoleDto.UserId));
-                await _adminService.UpdateRole(claim, updateRoleDto.RoleName);
+                await adminService.UpdateRole(username, updateRoleDto.RoleName);
                 return Ok();
             }
             catch (Exception e)
@@ -59,26 +49,26 @@ namespace PotegniMe.Controllers
         }
 
         [HttpDelete("adminDelete"), Authorize]
-        public async Task<ActionResult> AdminDelete(string username)
+        public async Task<ActionResult> AdminDelete(string usernameToDelete)
         {
             // Check if user is admin
-            var uid = User.FindFirstValue("uid");
-            if (uid == null) return Unauthorized();
+            var username = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(Convert.ToInt32(uid)))
+            if (!await userService.IsAdmin(username))
             {
                 return Unauthorized();
             }
 
             try
             {
-                User userToDelete = await _userService.GetUserByUsername(username);
-                if (userToDelete != null)
-                {
-                    await _userService.DeleteUser(Convert.ToInt32(userToDelete.UserId));
-                    return Ok();
-                }
-                return NotFound();
+                await userService.GetUserByUsername(usernameToDelete); // throws NotFoundException if user doesn't exist
+                await userService.DeleteUser(usernameToDelete);
+                return Ok();
+            }
+            catch (NotFoundException)
+            {
+                return StatusCode(404, new ErrorResponseDto { ErrorCode = 1, Message = "Uporabnik s tem uporabniškim imenom ne obstaja!" });
             }
             catch (Exception e)
             {
@@ -91,7 +81,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                string token = await _authService.RegisterAsync(userRegisterDto);
+                string token = await authService.RegisterAsync(userRegisterDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token = token });
             }
             catch (ArgumentException e)

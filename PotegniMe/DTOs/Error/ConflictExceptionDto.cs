@@ -1,9 +1,6 @@
 ﻿namespace PotegniMe.DTOs.Error
 {
-    public class ConflictExceptionDto : Exception
+    public class ConflictExceptionDto(string message) : Exception(message)
     {
-        public ConflictExceptionDto(string message) : base(message)
-        {
-        }
     }
 }
