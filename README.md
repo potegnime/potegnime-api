@@ -32,7 +32,8 @@ API runs on http://localhost:5194. Swagger is available at http://localhost:5194
 
 ## Development guidelines
 
-- TODO
+- Use primary constructors when creating new classes
+- 
 
 ## Deployment
 
