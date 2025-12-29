@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using System.Globalization;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,7 +12,6 @@ namespace PotegniMe.Services.AuthService
     public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration) : IAuthService
     {
         // Fields
-        public readonly IConfiguration _configuration = configuration;
         private readonly String _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
                       throw new Exception("Cannot find TMDB API KEY");
 
@@ -108,8 +108,6 @@ namespace PotegniMe.Services.AuthService
             // Get user by username
             User user = await userService.GetUserByUsername(username);
 
-            if (user == null) return false;
-
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return false;
@@ -132,13 +130,13 @@ namespace PotegniMe.Services.AuthService
                 await context.SaveChangesAsync();
 
                 // Send email
-                string baseUrl = _configuration["AppSettings:Audience"] ??
+                string baseUrl = configuration["AppSettings:Audience"] ??
                     throw new ArgumentException("Base URL not configured!");
                 if (!baseUrl.EndsWith('/')) baseUrl += '/';
 
                 Dictionary<string, string> templateData = new()
             {
-                { "username", user.Username.ToString() },
+                { "username", user.Username },
                 { "reset_link", $"{baseUrl}ponastavi-geslo?token={token}" }
             };
                 await emailService.SendEmailAsync(userEmail, templateData);
@@ -147,7 +145,6 @@ namespace PotegniMe.Services.AuthService
             {
                 // User does not exist, cannot send email
                 // Do not throw an exception, as this would allow for checking if email exists in the database
-                return;
             }
             catch (SendGridLimitException)
             {
@@ -201,8 +198,8 @@ namespace PotegniMe.Services.AuthService
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(30),
                 signingCredentials: creds,
-                issuer: _configuration.GetSection("AppSettings:Issuer").Value,
-                audience: _configuration.GetSection("AppSettings:Audience").Value
+                issuer: configuration.GetSection("AppSettings:Issuer").Value,
+                audience: configuration.GetSection("AppSettings:Audience").Value
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
