@@ -8,18 +8,8 @@ namespace PotegniMe.Controllers
 {
     [Route("recommend")]
     [ApiController]
-    public class RecommendController : ControllerBase
+    public class RecommendController(IRecommendService recommendService, IUserService userService) : ControllerBase
     {
-        // Fields
-        private readonly IRecommendService _recommendService;
-        private readonly IUserService _userService;
-
-        // Constructor
-        public RecommendController(IRecommendService recommendService, IUserService userService)
-        {
-            _recommendService = recommendService;
-            _userService = userService;
-        }
 
         // Routes
         [HttpPost, Authorize]
@@ -29,7 +19,7 @@ namespace PotegniMe.Controllers
             var username = User.FindFirstValue("username");
             if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(username)) return Unauthorized("Samo admin lahko nastavi film/serijo dneva");
+            if (!await userService.IsAdmin(username)) return Unauthorized("Samo admin lahko nastavi film/serijo dneva");
             
             try
             {
@@ -38,7 +28,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                Recommendation result = await _recommendService.SetRecommendation(recommendation);
+                Recommendation result = await recommendService.SetRecommendation(recommendation);
                 return Ok(result);
             }
             catch (Exception e)
@@ -57,7 +47,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                Recommendation result = await _recommendService.GetRecommendation(date, type);
+                Recommendation result = await recommendService.GetRecommendation(date, type);
                 return Ok(result);
             }
             catch (ArgumentException)
@@ -80,7 +70,7 @@ namespace PotegniMe.Controllers
                 {
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "Tip mora imeti vrednost movie ali series" });
                 }
-                await _recommendService.DeleteRecommendation(date, type);
+                await recommendService.DeleteRecommendation(date, type);
                 return Ok();
             }
             catch (ArgumentException)
@@ -98,7 +88,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                Recommendation result = await _recommendService.RandomRecommendation();
+                Recommendation result = await recommendService.RandomRecommendation();
                 return Ok(result);
             }
             catch (Exception e)
@@ -117,7 +107,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.NowPlaying(language, page, region);
+                var result = await recommendService.NowPlaying(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -136,7 +126,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.Popular(language, page, region);
+                var result = await recommendService.Popular(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -155,7 +145,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.TopRated(language, page, region);
+                var result = await recommendService.TopRated(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -174,7 +164,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.Upcoming(language, page, region);
+                var result = await recommendService.Upcoming(language, page, region);
                 return Ok(result);
             }
             catch (Exception e)
@@ -193,7 +183,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.TrendingMovie(language);
+                var result = await recommendService.TrendingMovie(language);
                 return Ok(result);
             }
             catch (Exception e)
@@ -212,7 +202,7 @@ namespace PotegniMe.Controllers
                     return BadRequest();
                 }
 
-                var result = await _recommendService.TrendingTv(language);
+                var result = await recommendService.TrendingTv(language);
                 return Ok(result);
             }
             catch (Exception e)

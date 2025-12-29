@@ -6,23 +6,14 @@ namespace PotegniMe.Controllers
 {
     [Route("auth")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IAuthService authService) : ControllerBase
     {
-        // Fields
-        private readonly IAuthService _authService;
-
-        // Constructor
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
         [HttpPost("register"), AllowAnonymous]
         public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto userRegisterDto)
         {
             try
             {
-                string token = await _authService.RegisterAsync(userRegisterDto);
+                string token = await authService.RegisterAsync(userRegisterDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token= token });
             }
             catch (ArgumentException e)
@@ -47,7 +38,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                var token = await _authService.LoginAsync(userLoginDto);
+                var token = await authService.LoginAsync(userLoginDto);
                 return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch (ArgumentException e)
@@ -71,7 +62,7 @@ namespace PotegniMe.Controllers
                 if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
                 
                 // Generate token
-                var token = await _authService.GenerateJwtToken(username);
+                var token = await authService.GenerateJwtToken(username);
                 return Ok(new JwtTokenResponseDto { Token = token });
             }
             catch
@@ -86,7 +77,7 @@ namespace PotegniMe.Controllers
             // TODO rate limit?
             try
             {
-                await _authService.ForgotPassword(forgotPasswordDto);
+                await authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
             }
             catch (SendGridLimitException)
@@ -108,7 +99,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                string jwt = await _authService.ResetPassword(resetPasswordDto);
+                string jwt = await authService.ResetPassword(resetPasswordDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
             }
             catch (InvalidTokenException e)

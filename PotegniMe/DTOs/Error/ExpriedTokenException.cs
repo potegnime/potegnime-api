@@ -1,9 +1,6 @@
 ﻿namespace PotegniMe.DTOs.Error
 {
-    public class ExpiredTokenException : Exception
+    public class ExpiredTokenException(string message) : Exception(message)
     {
-        public ExpiredTokenException(string message) : base(message)
-        {
-        }
     }
 }

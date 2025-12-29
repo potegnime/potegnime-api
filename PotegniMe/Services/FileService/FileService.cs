@@ -1,15 +1,7 @@
 ﻿namespace PotegniMe.Services.FileService
 {
-    public class FileService : IFileService
+    public class FileService(IConfiguration configuration) : IFileService
     {
-        // Fields
-        private readonly IConfiguration _configuration;
-
-        // Constructor
-        public FileService(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
 
         // Methods
 
@@ -22,7 +14,7 @@
         public string GetFullFilePath(string filePath, FileSystemFileType fileType)
         {
             // Get needed data from appsettings.json
-            string? profilePicStorage = _configuration["FileSystem:ProfilePics"];
+            string? profilePicStorage = configuration["FileSystem:ProfilePics"];
             if (profilePicStorage == null)
             {
                 throw new Exception("Cannot access internal file storage data!");

@@ -9,21 +9,12 @@ namespace PotegniMe.Controllers
 {
     [Route("admin")]
     [ApiController]
-    public class AdminController : ControllerBase
+    public class AdminController(
+        IAuthService authService,
+        IUserService userService, 
+        IAdminService adminService
+    ) : ControllerBase
     {
-        // Fields
-        private readonly IAuthService _authService;
-        private readonly IUserService _userService;
-        private readonly IAdminService _adminService;
-
-        // Constructor
-        public AdminController(IAuthService authService, IUserService userService, IAdminService adminService)
-        {
-            _authService = authService;
-            _userService = userService;
-            _adminService = adminService;
-        }
-
         [HttpPost("updateRole"), Authorize]
         public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
         {
@@ -31,7 +22,7 @@ namespace PotegniMe.Controllers
             var username = User.FindFirstValue("username");
             if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(username))
+            if (!await userService.IsAdmin(username))
             {
                 return Unauthorized();
             }
@@ -48,7 +39,7 @@ namespace PotegniMe.Controllers
                     return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
                 }
 
-                await _adminService.UpdateRole(username, updateRoleDto.RoleName);
+                await adminService.UpdateRole(username, updateRoleDto.RoleName);
                 return Ok();
             }
             catch (Exception e)
@@ -64,15 +55,15 @@ namespace PotegniMe.Controllers
             var username = User.FindFirstValue("username");
             if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
-            if (!await _userService.IsAdmin(username))
+            if (!await userService.IsAdmin(username))
             {
                 return Unauthorized();
             }
 
             try
             {
-                await _userService.GetUserByUsername(usernameToDelete); // throws NotFoundException if user doesn't exist
-                await _userService.DeleteUser(usernameToDelete);
+                await userService.GetUserByUsername(usernameToDelete); // throws NotFoundException if user doesn't exist
+                await userService.DeleteUser(usernameToDelete);
                 return Ok();
             }
             catch (NotFoundException)
@@ -90,7 +81,7 @@ namespace PotegniMe.Controllers
         {
             try
             {
-                string token = await _authService.RegisterAsync(userRegisterDto);
+                string token = await authService.RegisterAsync(userRegisterDto);
                 return StatusCode(201, new JwtTokenResponseDto { Token = token });
             }
             catch (ArgumentException e)

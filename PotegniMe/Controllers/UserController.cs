@@ -8,10 +8,7 @@ namespace PotegniMe.Controllers
 {
     [Route("user")]
     [ApiController]
-    public class UserController(
-        IUserService userService, 
-        IAuthService authService
-    ) : ControllerBase
+    public class UserController(IUserService userService, IAuthService authService) : ControllerBase
     {
         [HttpGet("username"), Authorize]
         public async Task<ActionResult> GetUser(string username)

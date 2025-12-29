@@ -1,24 +1,14 @@
 ﻿namespace PotegniMe.Services.UserService
 {
-    public class UserService : IUserService
+    public class UserService(DataContext context, IConfiguration configuration) : IUserService
     {
-        // Fields
-        private readonly DataContext _context;
-        private readonly IConfiguration _configuration;
-
-        // Constructor
-        public UserService(DataContext context, IConfiguration configuration)
-        {
-            _context = context;
-            _configuration = configuration;
-        }
 
         // Methods
         public async Task<List<User>> GetAllUsers()
         {
             try
             {
-                return await _context.User.ToListAsync();
+                return await context.User.ToListAsync();
             }
             catch (Exception e)
             {
@@ -30,7 +20,7 @@
         {
             try
             {
-                var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
+                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
                 return user != null;
             }
             catch (Exception e)
@@ -43,7 +33,7 @@
         {
             try
             {
-                var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username);
+                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username);
                 return user != null;
             }
             catch (Exception e)
@@ -56,7 +46,7 @@
         {
             try
             {
-                var user = await _context.User.FirstOrDefaultAsync(u => u.UserId == userId);
+                var user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId);
                 return user != null;
             }
             catch (Exception e)
@@ -73,14 +63,14 @@
             newUsername = newUsername.Trim().ToLower();
 
             // Check if username is already taken
-            if (await _context.User.AnyAsync(u => u.Username == newUsername))
+            if (await context.User.AnyAsync(u => u.Username == newUsername))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom že obstaja!");
             }
 
             var user = await GetUserByUsername(oldUsername);
             user.Username = newUsername;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task UpdateEmail(string username, string newEmail)
@@ -89,7 +79,7 @@
             newEmail = newEmail.Trim().ToLower();
 
             // Check if email is already taken
-            if (await _context.User.AnyAsync(u => u.Email == newEmail))
+            if (await context.User.AnyAsync(u => u.Email == newEmail))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem e-poštnim naslovom že obstaja!");
             }
@@ -97,15 +87,15 @@
             // Update email
             var user = await GetUserByUsername(username);
             user.Email = newEmail;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task UpdatePfp(string username, IFormFile profilePicture)
         {
             // Get needed data from appsettings.json
-            var supportedFormats = _configuration.GetSection("FileSystem:SupportedImageFormats").Get<string[]>();
-            string? storageFilePath = _configuration["FileSystem:ProfilePics"];
-            int? maxProfilePicSize = Convert.ToInt32(_configuration["FileSystem:ProfilePicsSizeLimit"]);
+            var supportedFormats = configuration.GetSection("FileSystem:SupportedImageFormats").Get<string[]>();
+            string? storageFilePath = configuration["FileSystem:ProfilePics"];
+            int? maxProfilePicSize = Convert.ToInt32(configuration["FileSystem:ProfilePicsSizeLimit"]);
 
             if (supportedFormats == null || storageFilePath == null || maxProfilePicSize == null)
             {
@@ -150,13 +140,13 @@
 
             // Update database image
             user.ProfilePicFilePath = profilePicFilePath;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task RemovePfp(string username)
         {
             // Get needed data from appsettings.json
-            string? storageFilePath = _configuration["FileSystem:ProfilePics"];
+            string? storageFilePath = configuration["FileSystem:ProfilePics"];
 
             if (storageFilePath == null)
             {
@@ -178,7 +168,7 @@
 
             // Updata database image
             user.ProfilePicFilePath = null;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task UpdatePassword(string username, string password)
@@ -193,12 +183,12 @@
             var user = await GetUserByUsername(username);
             user.PasswordHash = hashedPassword;
             user.PasswordSalt = salt;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
         public async Task<User> GetUserByUsername(string username)
         {
-            User user = await _context.User
+            User user = await context.User
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
             return user;
@@ -206,17 +196,17 @@
 
         public async Task<User> GetUserByEmail(string email)
         {
-            User user = await _context.User.FirstOrDefaultAsync(u => u.Email == email) ??
+            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ??
                 throw new NotFoundException();
             return user;
         }
 
         public async Task<Role> GetUserRole(string username)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             // Load role relation
-            _context.Entry(user).Reference(x => x.Role).Load();
+            context.Entry(user).Reference(x => x.Role).Load();
 
             return user.Role;
         }
@@ -245,10 +235,10 @@
 
         public async Task DeleteUser(string username)
         {
-            var user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new Exception("Uporabnik s tem Id ne obstaja!");
-            _context.User.Remove(user);
-            await _context.SaveChangesAsync();
+            context.User.Remove(user);
+            await context.SaveChangesAsync();
         }
 
         public RoleRequestStatus? GetRoleRequestStatus(int userId)
