@@ -175,20 +175,19 @@
                 throw new Exception("Cannot access internal file storage data!");
             }
 
-            // Delete profile picture - name like userId.*
-            var user = await GetUserByUsername(username);
-            int userId = user.UserId;
+            // Delete profile picture - name like username.*
             // Delete current profile picture, if exists
-            var existingFiles = Directory.GetFiles(storageFilePath, $"{userId}.*");
+            var existingFiles = Directory.GetFiles(storageFilePath, $"{username}.*");
             foreach (var file in existingFiles)
             {
-                if (Path.GetFileNameWithoutExtension(file).Equals(Convert.ToString(userId), StringComparison.OrdinalIgnoreCase))
+                if (Path.GetFileNameWithoutExtension(file).Equals(username, StringComparison.OrdinalIgnoreCase))
                 {
                     File.Delete(file);
                 }
             }
 
-            // Updata database image
+            // Update database image
+            var user = await GetUserByUsername(username);
             user.ProfilePicFilePath = null;
             await context.SaveChangesAsync();
         }
