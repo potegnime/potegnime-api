@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.Helpers;
 using PotegniMe.Services.EmailService;
 using PotegniMe.Services.EncryptionService;
@@ -45,7 +46,7 @@ namespace PotegniMe.Services.AuthService
             // Check if user exists
             if (await userService.UserExists(request.Username, request.Email))
             {
-                throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom ali e-poštnim naslovom že obstaja!");
+                throw new ConflictException("Uporabnik s tem uporabniškim imenom ali e-poštnim naslovom že obstaja!");
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
@@ -145,10 +146,6 @@ namespace PotegniMe.Services.AuthService
             {
                 // User does not exist, cannot send email
                 // Do not throw an exception, as this would allow for checking if email exists in the database
-            }
-            catch (SendGridLimitException)
-            {
-                throw new SendGridLimitException();
             }
         }
 

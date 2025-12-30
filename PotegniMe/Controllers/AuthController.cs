@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.Services.AuthService;
 
 namespace PotegniMe.Controllers
@@ -21,7 +22,7 @@ namespace PotegniMe.Controllers
                 // Missing fields
                 return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
             }
-            catch (ConflictExceptionDto e)
+            catch (ConflictException e)
             {
                 // User not found
                 return Conflict(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
@@ -79,10 +80,6 @@ namespace PotegniMe.Controllers
             {
                 await authService.ForgotPassword(forgotPasswordDto);
                 return Ok();
-            }
-            catch (SendGridLimitException)
-            {
-                return StatusCode(429, new ErrorResponseDto { ErrorCode = 1, Message = "SendGrid limit exceeded" });
             }
             catch (ArgumentException e)
             {

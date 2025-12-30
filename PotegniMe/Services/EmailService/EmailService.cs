@@ -45,7 +45,7 @@ namespace PotegniMe.Services.EmailService
                 // Check if rate limit exceeded (403 Forbidden)
                 if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
-                    throw new SendGridLimitException();
+                    // SendGrid limit exceeded...
                 }
 
                 // General error

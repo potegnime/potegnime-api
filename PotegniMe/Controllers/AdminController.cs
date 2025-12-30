@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.DTOs.User;
 using PotegniMe.Services.AdminService;
 using PotegniMe.Services.AuthService;
@@ -89,7 +90,7 @@ namespace PotegniMe.Controllers
                 // Missing fields
                 return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
             }
-            catch (ConflictExceptionDto e)
+            catch (ConflictException e)
             {
                 // User not found
                 return Conflict(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
