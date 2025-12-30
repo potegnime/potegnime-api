@@ -1,4 +1,6 @@
-﻿namespace PotegniMe.Services.UserService
+﻿using PotegniMe.Core.Exceptions;
+
+namespace PotegniMe.Services.UserService
 {
     public class UserService(DataContext context, IConfiguration configuration) : IUserService
     {
@@ -6,53 +8,25 @@
         // Methods
         public async Task<List<User>> GetAllUsers()
         {
-            try
-            {
-                return await context.User.ToListAsync();
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            return await context.User.ToListAsync();
         }
 
         public async Task<bool> UserExists(string username, string email)
         {
-            try
-            {
-                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
-                return user != null;
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
+            return user != null;
         }
 
         public async Task<bool> UserExists(string username)
         {
-            try
-            {
-                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username);
-                return user != null;
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username);
+            return user != null;
         }
 
         public async Task<bool> UserExists(int userId)
         {
-            try
-            {
-                var user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId);
-                return user != null;
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            var user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId);
+            return user != null;
         }
 
         // User based methods
@@ -65,7 +39,7 @@
             // Check if username is already taken
             if (await context.User.AnyAsync(u => u.Username == newUsername))
             {
-                throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom že obstaja!");
+                throw new ConflictException("Uporabnik s tem uporabniškim imenom že obstaja!");
             }
 
             var user = await GetUserByUsername(oldUsername);
@@ -81,7 +55,7 @@
             // Check if email is already taken
             if (await context.User.AnyAsync(u => u.Email == newEmail))
             {
-                throw new ConflictExceptionDto("Uporabnik s tem e-poštnim naslovom že obstaja!");
+                throw new ConflictException("Uporabnik s tem e-poštnim naslovom že obstaja!");
             }
 
             // Update email
@@ -99,7 +73,7 @@
 
             if (supportedFormats == null || storageFilePath == null || maxProfilePicSize == null)
             {
-                throw new Exception("Cannot access internal file storage data!");
+                throw new InvalidOperationException("Cannot access internal file storage data!");
             }
 
             // Make sure folder exists
@@ -146,7 +120,7 @@
         public async Task RenamePfp(string oldUsername, string newUsername)
         {
             string? storageFilePath = configuration["FileSystem:ProfilePics"];
-            if (string.IsNullOrEmpty(storageFilePath)) throw new Exception("Cannot access internal file storage data!");
+            if (string.IsNullOrEmpty(storageFilePath)) throw new InvalidOperationException("Cannot access internal file storage data!");
 
             var user = await GetUserByUsername(newUsername);
 
@@ -170,10 +144,7 @@
             // Get needed data from appsettings.json
             string? storageFilePath = configuration["FileSystem:ProfilePics"];
 
-            if (storageFilePath == null)
-            {
-                throw new Exception("Cannot access internal file storage data!");
-            }
+            if (storageFilePath == null) throw new InvalidOperationException("Cannot access internal file storage data!");
 
             // Delete profile picture - name like username.*
             // Delete current profile picture, if exists
@@ -209,25 +180,24 @@
 
         public async Task<User> GetUserByUsername(string username)
         {
-            User user = await context.User
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
-            return user;
+            return await context.User
+                       .Include(u => u.Role)
+                       .FirstOrDefaultAsync(u => u.Username == username)
+                   ?? throw new NotFoundException();
         }
 
         public async Task<User> GetUserByEmail(string email)
         {
-            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ??
-                throw new NotFoundException();
+            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ?? throw new NotFoundException();
             return user;
         }
 
         public async Task<Role> GetUserRole(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
-            // Load role relation
-            context.Entry(user).Reference(x => x.Role).Load();
+            var user = await context.User
+                           .Include(u => u.Role)
+                           .FirstOrDefaultAsync(u => u.Username == username)
+                       ?? throw new NotFoundException();
 
             return user.Role;
         }
@@ -235,12 +205,7 @@
         public async Task<bool> IsAdmin(string username)
         {
             Role role = await GetUserRole(username);
-
-            if (role.Name.ToLower() == "admin")
-            {
-                return true;
-            }
-            return false;
+            return role.Name.ToLower() == "admin";
         }
 
         public async Task<bool> IsUploader(string username)
@@ -251,8 +216,7 @@
 
         public async Task DeleteUser(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
             context.User.Remove(user);
             await context.SaveChangesAsync();
         }

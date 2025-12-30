@@ -13,24 +13,23 @@ using System.Text;
 using PotegniMe.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PotegniMe.Services.FileService;
 using PotegniMe.Services.RecommendService;
 using PotegniMe.Services.EmailService;
 using PotegniMe.Services.AdminService;
 using DotNetEnv;
+using PotegniMe.Constants;
+using PotegniMe.Core;
 using PotegniMe.Services.EncryptionService;
 
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
-var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN")!;
-var apiKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY")!;
-var issuer = builder.Configuration["AppSettings:Issuer"];
+var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_DB_CONN");;
+var apiKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_APP_KEY");
+var issuer = builder.Configuration["AppSettings:Issuer"] ?? throw new Exception($"{Constants.AppSettingsErrorCode} AppSettings:Issuer");
 
-// Add services to the container
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -77,12 +76,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = issuer,
-            ValidAudiences = new List<string>
-            {
-                "https://potegni.me"
-            },
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)
-            ),
+            ValidAudiences = new List<string> { "https://potegni.me" },
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)),
         };
     });
 
@@ -100,7 +95,6 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
-builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -125,7 +119,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
             catch (Exception ex)
             {
                 // invalid origin => deny
-                Console.WriteLine($"CORS_EXCEPTION: origin {origin}, exception {ex}");
+                Console.WriteLine($"{Constants.InternalErrorCode} origin: {origin}, exception: {ex}");
                 return false;
             }
             return false;
@@ -138,12 +132,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
 var app = builder.Build();
 
 // Middleware
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCors("NgOrigins");
 app.UseHttpsRedirection();
@@ -153,4 +142,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.Run();

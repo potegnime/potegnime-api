@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.Helpers;
 using PotegniMe.Services.EmailService;
 using PotegniMe.Services.EncryptionService;
@@ -13,15 +14,11 @@ namespace PotegniMe.Services.AuthService
 {
     public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IEncryptionService encryptionService, IConfiguration configuration) : IAuthService
     {
-        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
-                      throw new Exception("Cannot find POTEGNIME_APP_KEY");
+        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_APP_KEY");
 
         public async Task<string> GenerateJwtToken(string username)
         {
-            if (!await userService.UserExists(username))
-            {
-                throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
-            }
+            if (!await userService.UserExists(username)) throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             User user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
@@ -46,15 +43,14 @@ namespace PotegniMe.Services.AuthService
             // Check if user exists
             if (await userService.UserExists(request.Username, request.Email))
             {
-                throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom ali e-poštnim naslovom že obstaja!");
+                throw new ConflictException("Uporabnik s tem uporabniškim imenom ali e-poštnim naslovom že obstaja!");
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
             string passkey = AuthHelper.GeneratePasskey();
             string passkeyCipher = encryptionService.Encrypt(passkey);
 
-            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
-                throw new ArgumentException("Role not found");
+            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ?? throw new ArgumentException("Role not found");
             User newUser = new User
             {
                 Username = request.Username,
@@ -70,52 +66,31 @@ namespace PotegniMe.Services.AuthService
             // Add new user instance to the database
             context.User.Add(newUser);
             await context.SaveChangesAsync();
-            // Save changes to the database
-            await context.SaveChangesAsync();
             return GenerateJwtTokenString(newUser);
         }
 
         public async Task<string> LoginAsync(UserLoginDto request)
         {
             // Input validation
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
-            }
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)) throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
 
             // Input formatting - nothing cannot end with a trailing space
             request.Username = request.Username.Trim().ToLower();
             request.Password = request.Password.Trim();
 
             // Check if user exists
-            if (!await userService.UserExists(request.Username))
-            {
-                throw new ArgumentException("Napačno uporabniško ime ali geslo!");
-            }
+            if (!await userService.UserExists(request.Username)) throw new ArgumentException("Napačno uporabniško ime ali geslo!");
 
-            // Get user by username
             User user = await userService.GetUserByUsername(request.Username);
-
-            // Check if password is correct
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                throw new ArgumentException("Napačno uporabniško ime ali geslo!");
-            }
-
-            // Generate JWT token
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new ArgumentException("Napačno uporabniško ime ali geslo!");
+            
             return GenerateJwtTokenString(user);
         }
 
         public async Task<bool> VerifyLogin(string username, string password)
         {
-            // Get user by username
             User user = await userService.GetUserByUsername(username);
-
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-            {
-                return false;
-            }
-            return true;
+            return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
         }
 
         public async Task ForgotPassword(ForgotPasswordDto forgotPasswordDto)
@@ -133,14 +108,13 @@ namespace PotegniMe.Services.AuthService
                 await context.SaveChangesAsync();
 
                 // Send email
-                string baseUrl = configuration["AppSettings:Audience"] ??
-                    throw new ArgumentException("Base URL not configured!");
+                string baseUrl = configuration["AppSettings:Audience"] ?? throw new ArgumentException("Base URL not configured!");
                 if (!baseUrl.EndsWith('/')) baseUrl += '/';
 
                 Dictionary<string, string> templateData = new()
             {
                 { "username", user.Username },
-                { "reset_link", $"{baseUrl}ponastavi-geslo?token={token}" }
+                { "reset_link", $"{baseUrl}reset-password?token={token}" }
             };
                 await emailService.SendEmailAsync(userEmail, templateData);
             }
@@ -148,10 +122,6 @@ namespace PotegniMe.Services.AuthService
             {
                 // User does not exist, cannot send email
                 // Do not throw an exception, as this would allow for checking if email exists in the database
-            }
-            catch (SendGridLimitException)
-            {
-                throw new SendGridLimitException();
             }
         }
 
@@ -162,12 +132,12 @@ namespace PotegniMe.Services.AuthService
 
             // Check token validity
             User user = await context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
-                throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
+                throw new ArgumentException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
             // Check if token is expired
             if (user.PasswordResetTokenExpiration < DateTime.UtcNow)
             {
-                throw new ExpiredTokenException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
+                throw new ArgumentException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
             }
 
             // Reset password and delete token + expiration

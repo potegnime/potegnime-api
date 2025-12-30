@@ -9,9 +9,9 @@ public class EncryptionService : IEncryptionService
 
     public EncryptionService()
     {
-        var keyBase64 = Environment.GetEnvironmentVariable("POTEGNIME_AES_KEY") ?? throw new Exception("Missing POTEGNIME_AES_KEY");
+        var keyBase64 = Environment.GetEnvironmentVariable("POTEGNIME_AES_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_AES_KEY");
         _key = Convert.FromBase64String(keyBase64);
-        if (_key.Length is not (32)) throw new Exception("AES key must be 32 bytes");
+        if (_key.Length is not 32) throw new Exception($"{Constants.Constants.InternalErrorCode} AES key must be 32 bytes");
     }
     
     public string Encrypt(string clearText)
@@ -50,8 +50,7 @@ public class EncryptionService : IEncryptionService
         aes.IV = iv;
 
         using var decryptor = aes.CreateDecryptor();
-        var plainBytes = decryptor.TransformFinalBlock(
-            cipherBytes, 0, cipherBytes.Length);
+        var plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
 
         return Encoding.UTF8.GetString(plainBytes);
     }

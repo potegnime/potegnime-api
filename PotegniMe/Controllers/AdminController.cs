@@ -9,11 +9,7 @@ namespace PotegniMe.Controllers
 {
     [Route("admin")]
     [ApiController]
-    public class AdminController(
-        IAuthService authService,
-        IUserService userService, 
-        IAdminService adminService
-    ) : ControllerBase
+    public class AdminController(IAuthService authService, IUserService userService, IAdminService adminService) : ControllerBase
     {
         [HttpPost("updateRole"), Authorize]
         public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
@@ -21,84 +17,36 @@ namespace PotegniMe.Controllers
             // Check if user is admin
             var username = User.FindFirstValue("username");
             if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-
-            if (!await userService.IsAdmin(username))
+            if (!await userService.IsAdmin(username)) return Unauthorized();
+            
+            updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
+            if (updateRoleDto.RoleName != "admin" && updateRoleDto.RoleName != "user" && updateRoleDto.RoleName != "uploader")
             {
-                return Unauthorized();
+                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
             }
 
-            try
-            {
-                updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
-                if (
-                    updateRoleDto.RoleName != "admin" &&
-                    updateRoleDto.RoleName != "user" &&
-                    updateRoleDto.RoleName != "uploader"
-                    )
-                {
-                    return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
-                }
-
-                await adminService.UpdateRole(username, updateRoleDto.RoleName);
-                return Ok();
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            await adminService.UpdateRole(updateRoleDto.Username, updateRoleDto.RoleName);
+            return Ok();
         }
 
         [HttpDelete("adminDelete"), Authorize]
-        public async Task<ActionResult> AdminDelete(string usernameToDelete)
+        public async Task<ActionResult> AdminDelete(string username)
         {
             // Check if user is admin
-            var username = User.FindFirstValue("username");
-            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-
-            if (!await userService.IsAdmin(username))
-            {
-                return Unauthorized();
-            }
-
-            try
-            {
-                await userService.GetUserByUsername(usernameToDelete); // throws NotFoundException if user doesn't exist
-                await userService.DeleteUser(usernameToDelete);
-                return Ok();
-            }
-            catch (NotFoundException)
-            {
-                return StatusCode(404, new ErrorResponseDto { ErrorCode = 1, Message = "Uporabnik s tem uporabniškim imenom ne obstaja!" });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            var userUsername = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(userUsername)) return Unauthorized();
+            if (!await userService.IsAdmin(userUsername)) return Unauthorized();
+            
+            await userService.GetUserByUsername(username); // throws NotFoundException if user doesn't exist
+            await userService.DeleteUser(username);
+            return Ok();
         }
 
         [HttpPost("uploaderRequest"), Authorize]
         public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
         {
-            try
-            {
-                string token = await authService.RegisterAsync(userRegisterDto);
-                return StatusCode(201, new JwtTokenResponseDto { Token = token });
-            }
-            catch (ArgumentException e)
-            {
-                // Missing fields
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (ConflictExceptionDto e)
-            {
-                // User not found
-                return Conflict(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (Exception e)
-            {
-                // Wild card error
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            string token = await authService.RegisterAsync(userRegisterDto);
+            return StatusCode(201, new JwtTokenResponseDto { Token = token });
         }
     }
 }

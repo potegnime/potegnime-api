@@ -16,14 +16,10 @@ namespace PotegniMe.Services.EmailService
         public EmailService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _sendGridApiKey = Environment.GetEnvironmentVariable("POTEGNIME_SENDGRID_KEY") ??
-                throw new Exception("Cannot get inernal PotegniMe keys");
-            _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"] ??
-                throw new Exception("SendGrid Password Reset Template ID not configured");
-            _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"] ??
-                throw new Exception("SendGrid Sender Email not configured");
-            _sendGridSenderName = _configuration["SendGrid:SenderName"] ??
-                throw new Exception("SendGrid Sender Name not configured");
+            _sendGridApiKey = Environment.GetEnvironmentVariable("POTEGNIME_SENDGRID_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_SENDGRID_KEY");
+            _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} PasswordResetTemplateId");
+            _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SenderEmail");
+            _sendGridSenderName = _configuration["SendGrid:SenderName"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SenderName");
 
             if (
                 string.IsNullOrEmpty(_sendGridApiKey) ||
@@ -49,7 +45,7 @@ namespace PotegniMe.Services.EmailService
                 // Check if rate limit exceeded (403 Forbidden)
                 if (response.StatusCode == HttpStatusCode.Forbidden)
                 {
-                    throw new SendGridLimitException();
+                    // SendGrid limit exceeded...
                 }
 
                 // General error

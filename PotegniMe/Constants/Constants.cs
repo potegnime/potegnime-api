@@ -2,10 +2,11 @@ namespace PotegniMe.Constants
 {
     public static class Constants
     {
-        public const string TMDB_LANGUAGE_EN_US = "en-US";
-        public const string TMDB_LANGUAGE_SL_SI = "sl-SI";
-        public const string DEFAULT_TIME_WINDOW = "day";
-        public static readonly IDictionary<int, string> TMDB_GENRES_ENG = new Dictionary<int, string>
+        public static readonly string TmdbLanguageEnUs = "en-US";
+        public static readonly string TmdbLanguageSlSi = "sl-SI";
+        public static readonly  string DefaultTimeWindow = "day";
+
+        public static readonly  IDictionary<int, string> TmdbGenresEng = new Dictionary<int, string>
         {
             { 28, "Action" },
             { 12, "Adventure" },
@@ -36,7 +37,7 @@ namespace PotegniMe.Constants
             { 10768, "War & Politics" }
         };
 
-        public static readonly IDictionary<int, string> TMDB_GENRES_SL = new Dictionary<int, string>
+        public static readonly  IDictionary<int, string> TmdbGenresSl = new Dictionary<int, string>
         {
             { 28, "Akcija" },
             { 12, "Pustolovščina" },
@@ -66,5 +67,9 @@ namespace PotegniMe.Constants
             { 10767, "Pogovorna oddaja" },
             { 10768, "Vojna & Politika" }
         };
+
+        public static readonly string DotEnvErrorCode = "POTEGNIME_DOTENV_ERROR";
+        public static readonly string AppSettingsErrorCode = "POTEGNIME_APPSETTINGS_ERROR";
+        public static readonly string InternalErrorCode = "POTEGNIME_INTERNAL_ERROR";
     }
 }

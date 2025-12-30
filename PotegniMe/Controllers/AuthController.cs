@@ -11,109 +11,40 @@ namespace PotegniMe.Controllers
         [HttpPost("register"), AllowAnonymous]
         public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto userRegisterDto)
         {
-            try
-            {
-                string token = await authService.RegisterAsync(userRegisterDto);
-                return StatusCode(201, new JwtTokenResponseDto { Token= token });
-            }
-            catch (ArgumentException e)
-            {
-                // Missing fields
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (ConflictExceptionDto e)
-            {
-                // User not found
-                return Conflict(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (Exception e)
-            {
-                // Wild card error
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            string token = await authService.RegisterAsync(userRegisterDto);
+            return StatusCode(201, new JwtTokenResponseDto { Token= token });
         }
 
         [HttpPost("login"), AllowAnonymous]
         public async Task<ActionResult<string>> Login([FromBody] UserLoginDto userLoginDto)
         {
-            try
-            {
-                var token = await authService.LoginAsync(userLoginDto);
-                return Ok(new JwtTokenResponseDto { Token = token });
-            }
-            catch (ArgumentException e)
-            {
-                return StatusCode(401, new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-
-            }
-            catch (Exception e)
-            {
-                // Wild card error
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            var token = await authService.LoginAsync(userLoginDto);
+            return Ok(new JwtTokenResponseDto { Token = token });
         }
 
         [HttpPost("refresh"), Authorize]
         public async Task<ActionResult<string>> RefreshToken()
         {
-            try
-            {
-                var username = User.FindFirstValue("username");
-                if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-                
-                // Generate token
-                var token = await authService.GenerateJwtToken(username);
-                return Ok(new JwtTokenResponseDto { Token = token });
-            }
-            catch
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = "Server error" });
-            }
+            var username = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+            
+            var token = await authService.GenerateJwtToken(username);
+            return Ok(new JwtTokenResponseDto { Token = token });
         }
 
         [HttpPost("forgotPassword"), AllowAnonymous]
         public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
-            // TODO rate limit?
-            try
-            {
-                await authService.ForgotPassword(forgotPasswordDto);
-                return Ok();
-            }
-            catch (SendGridLimitException)
-            {
-                return StatusCode(429, new ErrorResponseDto { ErrorCode = 1, Message = "SendGrid limit exceeded" });
-            }
-            catch (ArgumentException e)
-            {
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+            await authService.ForgotPassword(forgotPasswordDto);
+            return Ok();
         }
 
         [HttpPost("resetPassword"), AllowAnonymous]
         public async Task<ActionResult<string>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
-            try
-            {
-                string jwt = await authService.ResetPassword(resetPasswordDto);
-                return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
-            }
-            catch (InvalidTokenException e)
-            {
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (ExpiredTokenException e)
-            {
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = e.Message });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new ErrorResponseDto { ErrorCode = 2, Message = e.Message });
-            }
+
+            string jwt = await authService.ResetPassword(resetPasswordDto);
+            return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
         }
     }
 }

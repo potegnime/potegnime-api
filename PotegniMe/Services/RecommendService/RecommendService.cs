@@ -1,7 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.DTOs.Recommend;
 
+// TODO - make better, remove all the dupliacte code
+// Make all parameters necessary, throw ArgumentException if not present/invalid
 namespace PotegniMe.Services.RecommendService
 {
     public class RecommendService : IRecommendService
@@ -17,15 +20,16 @@ namespace PotegniMe.Services.RecommendService
         {
             _configuration = configuration;
             _context = context;
-            _tmdbUrlBase = _configuration["Tmdb:Url"] ??
-                           throw new Exception("Cannot find TMDB url");
-            _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ??
-                          throw new Exception("Cannot find TMDB API KEY");
+            _tmdbUrlBase = _configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
+            _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_TMDB_KEY");
         }
 
         // Methods
         public async Task<Recommendation> SetRecommendation(Recommendation recommendation)
         {
+            recommendation.Type = recommendation.Type.ToLower();
+            if (recommendation.Type != "movie" && recommendation.Type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
+            
             // Check if recommendation already exists for the given day
             var todayRecommendation = await _context.Recommendation.FirstOrDefaultAsync(
                 r => r.Date.Equals(recommendation.Date) && r.Type.Equals(recommendation.Type)
@@ -48,23 +52,22 @@ namespace PotegniMe.Services.RecommendService
             return newRecommendation;
         }
 
-        public async Task<Recommendation> GetRecommendation(DateOnly datetime, string type)
+        public async Task<Recommendation> GetRecommendation(DateOnly date, string type)
         {
-            Recommendation recommendation = await _context.Recommendation.FirstOrDefaultAsync(
-                r => r.Date.Equals(datetime) && r.Type.Equals(type))
-             ?? throw new ArgumentException();
-            return recommendation;
+            type = type.ToLower();
+            if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
+            
+            return await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
+                   ?? throw new NotFoundException();
         }
 
-        public async Task DeleteRecommendation(DateOnly datetime, string type)
+        public async Task DeleteRecommendation(DateOnly date, string type)
         {
-            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(
-                r => r.Date.Equals(datetime) && r.Type.Equals(type)
-            );
-            if (recommendation == null)
-            {
-                throw new ArgumentException();
-            }
+            type = type.ToLower();
+            if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
+
+            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
+                                 ?? throw new NotFoundException();
             _context.Recommendation.Remove(recommendation);
             await _context.SaveChangesAsync();
         }
@@ -80,16 +83,15 @@ namespace PotegniMe.Services.RecommendService
             int randomMovieOnPage = random.Next(1, 20);
 
             string tmdbUrlBase = _tmdbUrlBase + "discover/movie";
-            string tmdbUrlInit = tmdbUrlBase + $"?api_key={this._tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
+            string tmdbUrlInit = tmdbUrlBase + $"?api_key={_tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
             using HttpClient httpClient = new HttpClient();
-
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrlInit);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
-            if (serializedJsonResponse?.Results == null) throw new Exception();
+            if (serializedJsonResponse?.Results == null) throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API response is null");
 
             var rnd = serializedJsonResponse.Results[randomMovieOnPage];
 
@@ -103,9 +105,11 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbMovieResponse>> NowPlaying(string language, int page, string region)
         {
-            // Get TMDB PotegniMe key from configugration
-            string tmdbUrl = this._tmdbUrlBase + "movie/now_playing";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            // Get TMDB PotegniMe key from configuration
+            string tmdbUrl = _tmdbUrlBase + "movie/now_playing";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -130,9 +134,11 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbMovieResponse>> Popular(string language, int page, string region)
         {
-            // Get TMDB PotegniMe key from configugration
-            string tmdbUrl = this._tmdbUrlBase + "movie/popular";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            // Get TMDB PotegniMe key from configuration
+            string tmdbUrl = _tmdbUrlBase + "movie/popular";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -157,9 +163,11 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbMovieResponse>> TopRated(string language, int page, string region)
         {
-            // Get TMDB PotegniMe key from configugration
-            string tmdbUrl = this._tmdbUrlBase + "movie/top_rated";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            // Get TMDB PotegniMe key from configuration
+            string tmdbUrl = _tmdbUrlBase + "movie/top_rated";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}&page={page}&region={region}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -184,7 +192,9 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbMovieResponse>> Upcoming(string language, int page, string region)
         {
-            // Get TMDB PotegniMe key from configugration
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            // Get TMDB PotegniMe key from configuration
             string tmdbUrl = this._tmdbUrlBase + "movie/upcoming";
             tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}&page={page}&region={region}";
 
@@ -211,8 +221,10 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbTrendingResponse>> TrendingMovie(string language)
         {
-            string tmdbUrl = this._tmdbUrlBase + $"trending/movie/{Constants.Constants.DEFAULT_TIME_WINDOW}";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            string tmdbUrl = _tmdbUrlBase + $"trending/movie/{Constants.Constants.DefaultTimeWindow}";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -236,8 +248,10 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbTrendingResponse>> TrendingTv(string language)
         {
-            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{Constants.Constants.DEFAULT_TIME_WINDOW}";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
+            if (language != "sl-SI" && language != "en-US") throw new ArgumentException("Unsupported language");
+            
+            string tmdbUrl = _tmdbUrlBase + $"trending/tv/{Constants.Constants.DefaultTimeWindow}";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -264,23 +278,22 @@ namespace PotegniMe.Services.RecommendService
         {
             if (language == "en-US")
             {
-                if (Constants.Constants.TMDB_GENRES_ENG.TryGetValue(genreId, out string? genreName))
+                if (Constants.Constants.TmdbGenresEng.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
                 return "Unknown category";
             }
-            else if (language == "sl-SI")
+            if (language == "sl-SI")
             {
-                if (Constants.Constants.TMDB_GENRES_SL.TryGetValue(genreId, out string? genreName))
+                if (Constants.Constants.TmdbGenresSl.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
                 return "Neznana kategorija";
             }
-            throw new Exception("Neveljaven izbor jezika");
+            throw new Exception($"{Constants.Constants.InternalErrorCode} Neveljaven izbor jezika");
         }
-
     }
 
 
