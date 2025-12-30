@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using PotegniMe.Core.Exceptions;
 using PotegniMe.DTOs.Recommend;
 
+// TODO - make better, remove all the dupliacte code
+// Make all parameters necessary, throw ArgumentException if not present/invalid
 namespace PotegniMe.Services.RecommendService
 {
     public class RecommendService : IRecommendService

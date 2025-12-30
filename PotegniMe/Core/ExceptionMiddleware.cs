@@ -29,7 +29,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         {
             case NotFoundException:
                 status = HttpStatusCode.NotFound;
-                response = new ErrorResponseDto { ErrorCode = 1, Message = "Resource not found." };
+                response = new ErrorResponseDto { ErrorCode = 1, Message = string.Empty };
                 break;
             case ConflictException e:
                 status = HttpStatusCode.Conflict;
