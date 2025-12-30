@@ -13,8 +13,7 @@ namespace PotegniMe.Services.AuthService
 {
     public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IEncryptionService encryptionService, IConfiguration configuration) : IAuthService
     {
-        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
-                      throw new Exception("Cannot find POTEGNIME_APP_KEY");
+        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_APP_KEY");
 
         public async Task<string> GenerateJwtToken(string username)
         {
@@ -53,8 +52,7 @@ namespace PotegniMe.Services.AuthService
             string passkey = AuthHelper.GeneratePasskey();
             string passkeyCipher = encryptionService.Encrypt(passkey);
 
-            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
-                throw new ArgumentException("Role not found");
+            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ?? throw new ArgumentException("Role not found");
             User newUser = new User
             {
                 Username = request.Username,
@@ -133,8 +131,7 @@ namespace PotegniMe.Services.AuthService
                 await context.SaveChangesAsync();
 
                 // Send email
-                string baseUrl = configuration["AppSettings:Audience"] ??
-                    throw new ArgumentException("Base URL not configured!");
+                string baseUrl = configuration["AppSettings:Audience"] ?? throw new ArgumentException("Base URL not configured!");
                 if (!baseUrl.EndsWith('/')) baseUrl += '/';
 
                 Dictionary<string, string> templateData = new()

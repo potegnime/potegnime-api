@@ -217,15 +217,13 @@
 
         public async Task<User> GetUserByEmail(string email)
         {
-            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ??
-                throw new NotFoundException();
+            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ?? throw new NotFoundException();
             return user;
         }
 
         public async Task<Role> GetUserRole(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ?? throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             // Load role relation
             context.Entry(user).Reference(x => x.Role).Load();
 
@@ -251,8 +249,7 @@
 
         public async Task DeleteUser(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
+            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ?? throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             context.User.Remove(user);
             await context.SaveChangesAsync();
         }
