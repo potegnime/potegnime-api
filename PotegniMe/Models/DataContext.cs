@@ -1,5 +1,4 @@
-﻿// TODO make sure roles are in the database on initialization - admin, user...
-namespace PotegniMe.Models
+﻿namespace PotegniMe.Models
 {
     public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
     {
