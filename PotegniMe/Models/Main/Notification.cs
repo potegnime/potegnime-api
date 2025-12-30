@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace PotegniMe.Models.Main;
+﻿namespace PotegniMe.Models.Main;
 
 public class Notification
 {

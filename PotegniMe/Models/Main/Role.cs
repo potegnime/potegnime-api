@@ -6,7 +6,7 @@ public class Role
 {
     public int RoleId { get; set; }
 
-    [MaxLength(50)]
+    [MaxLength(256)]
     public required string Name { get; set; }
 
     // Navigation properties
