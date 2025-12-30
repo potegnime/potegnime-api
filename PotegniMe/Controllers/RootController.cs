@@ -9,7 +9,7 @@ namespace PotegniMe.Controllers
         [HttpGet, AllowAnonymous]
         public ActionResult Root()
         {
-            return StatusCode(200, "api" );
+            return StatusCode(200, "api");
         }
     }
 }
