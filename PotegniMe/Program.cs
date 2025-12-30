@@ -78,9 +78,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = issuer,
             ValidAudiences = new List<string>
             {
-                "https://potegni.me/",
-                "https://potegni.me",
-                "https://potegni.me/prijava"
+                "https://potegni.me"
             },
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)
             ),
@@ -122,10 +120,10 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
                 if (builder.Environment.IsDevelopment() && host == "localhost") return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // invalid origin => deny
-                // TODO - observability
+                Console.WriteLine($"CORS_EXCEPTION: origin {origin}, exception {ex}");
                 return false;
             }
             return false;
