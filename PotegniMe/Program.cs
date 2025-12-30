@@ -13,7 +13,6 @@ using System.Text;
 using PotegniMe.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PotegniMe.Services.FileService;
 using PotegniMe.Services.RecommendService;
 using PotegniMe.Services.EmailService;
 using PotegniMe.Services.AdminService;
@@ -96,7 +95,6 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
-builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
