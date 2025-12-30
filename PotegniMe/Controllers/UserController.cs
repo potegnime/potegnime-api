@@ -104,7 +104,7 @@ namespace PotegniMe.Controllers
                 throw new ArgumentException("Novo geslo ne sme biti enako prejšnjemu.");
 
             if (!await authService.VerifyLogin(username, updatePasswordDto.OldPassword))
-                throw new UnauthorizedAccessException();
+                throw new UnauthorizedAccessException("Geslo ni pravilno!");
 
             await userService.UpdatePassword(username, updatePasswordDto.NewPassword);
             return Ok();
@@ -117,7 +117,7 @@ namespace PotegniMe.Controllers
             if (username == null) return Unauthorized();
 
             if (!await authService.VerifyLogin(username, deleteUserDto.Password))
-                throw new UnauthorizedAccessException("Geslo ni pravilno");
+                throw new UnauthorizedAccessException("Geslo ni pravilno!");
 
             await userService.DeleteUser(username);
             return Ok();

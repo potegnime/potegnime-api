@@ -18,10 +18,7 @@ namespace PotegniMe.Services.AuthService
 
         public async Task<string> GenerateJwtToken(string username)
         {
-            if (!await userService.UserExists(username))
-            {
-                throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
-            }
+            if (!await userService.UserExists(username)) throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             User user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
@@ -77,44 +74,25 @@ namespace PotegniMe.Services.AuthService
         public async Task<string> LoginAsync(UserLoginDto request)
         {
             // Input validation
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-            {
-                throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
-            }
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)) throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
 
             // Input formatting - nothing cannot end with a trailing space
             request.Username = request.Username.Trim().ToLower();
             request.Password = request.Password.Trim();
 
             // Check if user exists
-            if (!await userService.UserExists(request.Username))
-            {
-                throw new ArgumentException("Napačno uporabniško ime ali geslo!");
-            }
+            if (!await userService.UserExists(request.Username)) throw new ArgumentException("Napačno uporabniško ime ali geslo!");
 
-            // Get user by username
             User user = await userService.GetUserByUsername(request.Username);
-
-            // Check if password is correct
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
-                throw new ArgumentException("Napačno uporabniško ime ali geslo!");
-            }
-
-            // Generate JWT token
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new ArgumentException("Napačno uporabniško ime ali geslo!");
+            
             return GenerateJwtTokenString(user);
         }
 
         public async Task<bool> VerifyLogin(string username, string password)
         {
-            // Get user by username
             User user = await userService.GetUserByUsername(username);
-
-            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-            {
-                return false;
-            }
-            return true;
+            return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
         }
 
         public async Task ForgotPassword(ForgotPasswordDto forgotPasswordDto)
