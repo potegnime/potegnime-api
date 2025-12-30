@@ -17,10 +17,8 @@ namespace PotegniMe.Services.RecommendService
         {
             _configuration = configuration;
             _context = context;
-            _tmdbUrlBase = _configuration["Tmdb:Url"] ??
-                           throw new Exception("Cannot find TMDB url");
-            _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ??
-                          throw new Exception("Cannot find TMDB API KEY");
+            _tmdbUrlBase = _configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
+            _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_TMDB_KEY");
         }
 
         // Methods
@@ -52,7 +50,7 @@ namespace PotegniMe.Services.RecommendService
         {
             Recommendation recommendation = await _context.Recommendation.FirstOrDefaultAsync(
                 r => r.Date.Equals(datetime) && r.Type.Equals(type))
-             ?? throw new ArgumentException();
+                ?? throw new ArgumentException();
             return recommendation;
         }
 
@@ -89,7 +87,7 @@ namespace PotegniMe.Services.RecommendService
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var serializedJsonResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(jsonResponse);
 
-            if (serializedJsonResponse?.Results == null) throw new Exception();
+            if (serializedJsonResponse?.Results == null) throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API response is null");
 
             var rnd = serializedJsonResponse.Results[randomMovieOnPage];
 
@@ -211,8 +209,8 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbTrendingResponse>> TrendingMovie(string language)
         {
-            string tmdbUrl = this._tmdbUrlBase + $"trending/movie/{Constants.Constants.DEFAULT_TIME_WINDOW}";
-            tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
+            string tmdbUrl = _tmdbUrlBase + $"trending/movie/{Constants.Constants.DefaultTimeWindow}";
+            tmdbUrl += $"?api_key={_tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
 
@@ -236,7 +234,7 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task<List<TmdbTrendingResponse>> TrendingTv(string language)
         {
-            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{Constants.Constants.DEFAULT_TIME_WINDOW}";
+            string tmdbUrl = this._tmdbUrlBase + $"trending/tv/{Constants.Constants.DefaultTimeWindow}";
             tmdbUrl += $"?api_key={this._tmdbApiKey}&language={language}";
 
             using HttpClient httpClient = new HttpClient();
@@ -264,23 +262,22 @@ namespace PotegniMe.Services.RecommendService
         {
             if (language == "en-US")
             {
-                if (Constants.Constants.TMDB_GENRES_ENG.TryGetValue(genreId, out string? genreName))
+                if (Constants.Constants.TmdbGenresEng.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
                 return "Unknown category";
             }
-            else if (language == "sl-SI")
+            if (language == "sl-SI")
             {
-                if (Constants.Constants.TMDB_GENRES_SL.TryGetValue(genreId, out string? genreName))
+                if (Constants.Constants.TmdbGenresSl.TryGetValue(genreId, out string? genreName))
                 {
                     return genreName;
                 }
                 return "Neznana kategorija";
             }
-            throw new Exception("Neveljaven izbor jezika");
+            throw new Exception($"{Constants.Constants.InternalErrorCode} Neveljaven izbor jezika");
         }
-
     }
 
 
