@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.DTOs.Recommend;
 
 namespace PotegniMe.Services.RecommendService
@@ -55,7 +56,7 @@ namespace PotegniMe.Services.RecommendService
             if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
             
             return await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
-                   ?? throw new ArgumentException("Recommendation not found");
+                   ?? throw new NotFoundException();
         }
 
         public async Task DeleteRecommendation(DateOnly date, string type)
@@ -64,7 +65,7 @@ namespace PotegniMe.Services.RecommendService
             if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
 
             var recommendation = await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
-                                 ?? throw new ArgumentException("Recommendation not found");
+                                 ?? throw new NotFoundException();
             _context.Recommendation.Remove(recommendation);
             await _context.SaveChangesAsync();
         }
