@@ -79,10 +79,10 @@ namespace PotegniMe.Services.AuthService
             request.Password = request.Password.Trim();
 
             // Check if user exists
-            if (!await userService.UserExists(request.Username)) throw new UnauthorizedAccessException("Napačno uporabniško ime ali geslo!");
+            if (!await userService.UserExists(request.Username)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
 
             User user = await userService.GetUserByUsername(request.Username);
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new UnauthorizedAccessException("Napačno uporabniško ime ali geslo!");
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
             
             return GenerateJwtTokenString(user);
         }

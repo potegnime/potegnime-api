@@ -43,6 +43,10 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
                 status = HttpStatusCode.Forbidden;
                 response = new ErrorResponseDto { ErrorCode = 1, Message = e.Message };
                 break;
+            case UnauthorizedException e:
+                status = HttpStatusCode.Unauthorized;
+                response = new ErrorResponseDto { ErrorCode = 1, Message = e.Message };
+                break;
             default:
                 status = HttpStatusCode.InternalServerError;
                 response = new ErrorResponseDto { ErrorCode = 2, Message = "Internal server error." };
