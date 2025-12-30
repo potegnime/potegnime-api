@@ -27,13 +27,13 @@ namespace PotegniMe.Services.RecommendService
         public async Task<Recommendation> SetRecommendation(Recommendation recommendation)
         {
             // Check if recommendation already exists for the given day
-            var todayRecommendation = await _context.Recommendations.FirstOrDefaultAsync(
+            var todayRecommendation = await _context.Recommendation.FirstOrDefaultAsync(
                 r => r.Date.Equals(recommendation.Date) && r.Type.Equals(recommendation.Type)
             );
             if (todayRecommendation != null)
             {
                 // Recommendation already exists, delete it from the database
-                _context.Recommendations.Remove(todayRecommendation);
+                _context.Recommendation.Remove(todayRecommendation);
                 await _context.SaveChangesAsync();
             }
             // Set new recommendation
@@ -43,14 +43,14 @@ namespace PotegniMe.Services.RecommendService
                 Type = recommendation.Type,
                 Name = recommendation.Name
             };
-            _context.Recommendations.Add(newRecommendation);
+            _context.Recommendation.Add(newRecommendation);
             await _context.SaveChangesAsync();
             return newRecommendation;
         }
 
         public async Task<Recommendation> GetRecommendation(DateOnly datetime, string type)
         {
-            Recommendation recommendation = await _context.Recommendations.FirstOrDefaultAsync(
+            Recommendation recommendation = await _context.Recommendation.FirstOrDefaultAsync(
                 r => r.Date.Equals(datetime) && r.Type.Equals(type))
              ?? throw new ArgumentException();
             return recommendation;
@@ -58,14 +58,14 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task DeleteRecommendation(DateOnly datetime, string type)
         {
-            var recommendation = await _context.Recommendations.FirstOrDefaultAsync(
+            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(
                 r => r.Date.Equals(datetime) && r.Type.Equals(type)
             );
             if (recommendation == null)
             {
                 throw new ArgumentException();
             }
-            _context.Recommendations.Remove(recommendation);
+            _context.Recommendation.Remove(recommendation);
             await _context.SaveChangesAsync();
         }
 

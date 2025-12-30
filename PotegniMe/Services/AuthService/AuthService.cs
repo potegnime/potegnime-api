@@ -23,7 +23,7 @@ namespace PotegniMe.Services.AuthService
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
             }
 
-            User user = await context.Users.FirstOrDefaultAsync(u => u.Username == username) ??
+            User user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             return GenerateJwtTokenString(user);
@@ -53,7 +53,7 @@ namespace PotegniMe.Services.AuthService
             string passkey = AuthHelper.GeneratePasskey();
             string passkeyCipher = encryptionService.Encrypt(passkey);
 
-            Role role = context.Roles.FirstOrDefault(r => r.Name == "user") ??
+            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
                 throw new ArgumentException("Role not found");
             User newUser = new User
             {
@@ -68,7 +68,7 @@ namespace PotegniMe.Services.AuthService
                 PasskeyCipher = passkeyCipher
             };
             // Add new user instance to the database
-            context.Users.Add(newUser);
+            context.User.Add(newUser);
             await context.SaveChangesAsync();
             // Save changes to the database
             await context.SaveChangesAsync();
@@ -161,7 +161,7 @@ namespace PotegniMe.Services.AuthService
             string newPassword = resetPasswordDto.Password;
 
             // Check token validity
-            User user = await context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
+            User user = await context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
                 throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
             // Check if token is expired

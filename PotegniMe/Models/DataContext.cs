@@ -4,12 +4,12 @@
     {
 
         // Tables
-        public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserNotification> UserNotifications { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Recommendation> Recommendations { get; set; }
-        public DbSet<RoleRequest> RoleRequests { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<Role> Role { get; set; }
+        public DbSet<UserNotification> UserNotification { get; set; }
+        public DbSet<Notification> Notification { get; set; }
+        public DbSet<Recommendation> Recommendation { get; set; }
+        public DbSet<RoleRequest> RoleRequest { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

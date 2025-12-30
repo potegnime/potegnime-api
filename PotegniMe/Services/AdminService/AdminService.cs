@@ -7,7 +7,7 @@ namespace PotegniMe.Services.AdminService
         // Methods
         public async Task UpdateRole(string username, string roleName)
         {
-            Role role = context.Roles.FirstOrDefault(r => r.Name == roleName) ??
+            Role role = context.Role.FirstOrDefault(r => r.Name == roleName) ??
                 throw new ArgumentException("Role not found");
             User user = await userService.GetUserByUsername(username);
             user.Role = role;
