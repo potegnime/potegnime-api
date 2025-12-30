@@ -33,18 +33,6 @@ public class User
 
     public long DownloadBytes { get; set; } = 0;
 
-    public decimal DonatedEur { get; set; } = 0;
-    
-    public decimal DonatedBtc { get; set; } = 0;
-    
-    public decimal DonatedEth { get; set; } = 0;
-    
-    public decimal DonatedXmr { get; set; } = 0;
-    
-    public decimal DonatedLtc { get; set; } = 0;
-    
-    public decimal DonatedDoge { get; set; } = 0;
-
     public string? PasswordResetToken { get; set; }
 
     public DateTime? PasswordResetTokenExpiration { get; set; }
