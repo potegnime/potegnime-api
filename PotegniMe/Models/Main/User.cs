@@ -4,60 +4,44 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PotegniMe.Models.Main;
 public class User
 {
-    [Key]
     public int UserId { get; set; }
 
-    [Required]
     [MaxLength(100)]
     public required string Username { get; set; }
 
-    [Required]
     [MaxLength(320)]
     public required string Email { get; set; }
 
-    [Required]
-    public string AuthToken { get; set; } // Has default value
+    [MaxLength(256)]
+    public required string PasskeyCipher { get; set; }
 
-    [Required]
     public required string PasswordHash { get; set; }
 
-    [Required]
     public required string PasswordSalt { get; set; }
 
     public string? ProfilePicFilePath { get; set; }
 
-    public string? ProfilePicUrl { get; set; }
+    public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
 
-    [Required]
-    public required DateTime JoinedDate { get; set; }
+    public int UploadedTorrentsCount { get; set; } = 0;
 
-    [Required]
-    public int UploadedTorrentsCount { get; set; } // Has default value
+    public int DownloadedTorrentsCount { get; set; } = 0;
 
-    [Required]
-    public int DownloadedTorrentsCount { get; set; } // Has default value
+    public int LikedTorrentsCount { get; set; } = 0;
 
-    [Required]
-    public int LikedTorrentsCount { get; set; } // Has default value
+    public long UploadBytes { get; set; } = 0;
 
-    [Required]
-    public int UploadBytes { get; set; } // Has default value
-
-    [Required]
-    public int DownloadBytes { get; set; } // Has default value
-
-    public float? DonatedEur { get; set; }
+    public long DownloadBytes { get; set; } = 0;
 
     public string? PasswordResetToken { get; set; }
 
     public DateTime? PasswordResetTokenExpiration { get; set; }
 
-    [Required]
-    public required int RoleId { get; set; }
+    public int RoleId { get; set; }
 
     // Navigation properties
     [ForeignKey("RoleId")]
-    public virtual Role Role { get; set; } = null!;
+    public Role Role { get; set; } = null!;
 
-    public virtual ICollection<UserNotification> UserNotification { get; } = new List<UserNotification>();
+    public ICollection<UserNotification> UserNotifications { get; } = new List<UserNotification>();
 }

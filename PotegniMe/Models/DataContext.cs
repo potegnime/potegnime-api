@@ -1,7 +1,6 @@
-﻿// TODO make sure roles are in the database on initialization - admin, user...
-namespace PotegniMe.Models
+﻿namespace PotegniMe.Models
 {
-    public class DataContext(DbContextOptions<DataContext> opions) : DbContext(opions)
+    public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
     {
 
         // Tables
@@ -19,25 +18,14 @@ namespace PotegniMe.Models
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
-            modelBuilder.Entity<User>()
-                .Property(u => u.AuthToken)
-                .HasDefaultValue("0");
-
-            modelBuilder.Entity<User>()
-                .Property(u => u.UploadedTorrentsCount)
-                .HasDefaultValue(0);
-
-            // Role
-
-            // UserNotification
-
+            
             // Recommendation
             // Composite key - Date and Type
             modelBuilder.Entity<Recommendation>()
                 .Property(r => r.Date)
                 .HasColumnType("date");
             modelBuilder.Entity<Recommendation>()
-                .HasKey(e => new { e.Date, e.Type });
+                .HasKey(r => new { r.Date, r.Type });
         }
     }
 }

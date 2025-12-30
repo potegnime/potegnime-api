@@ -4,18 +4,18 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using PotegniMe.Helpers;
 using PotegniMe.Services.EmailService;
+using PotegniMe.Services.EncryptionService;
 using PotegniMe.Services.UserService;
 
 namespace PotegniMe.Services.AuthService
 {
-    public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration) : IAuthService
+    public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IEncryptionService encryptionService, IConfiguration configuration) : IAuthService
     {
-        // Fields
-        private readonly String _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
-                      throw new Exception("Cannot find TMDB API KEY");
+        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
+                      throw new Exception("Cannot find POTEGNIME_APP_KEY");
 
-        // Methods
         public async Task<string> GenerateJwtToken(string username)
         {
             if (!await userService.UserExists(username))
@@ -50,6 +50,8 @@ namespace PotegniMe.Services.AuthService
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
+            string passkey = AuthHelper.GeneratePasskey();
+            string passkeyCipher = encryptionService.Encrypt(passkey);
 
             Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
                 throw new ArgumentException("Role not found");
@@ -62,7 +64,8 @@ namespace PotegniMe.Services.AuthService
                 ProfilePicFilePath = null,
                 JoinedDate = DateTime.UtcNow,
                 RoleId = role.RoleId,
-                Role = role
+                Role = role,
+                PasskeyCipher = passkeyCipher
             };
             // Add new user instance to the database
             context.User.Add(newUser);

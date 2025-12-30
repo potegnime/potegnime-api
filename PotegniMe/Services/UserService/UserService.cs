@@ -246,18 +246,13 @@
         public async Task<bool> IsUploader(string username)
         {
             Role role = await GetUserRole(username);
-
-            if (role.Name.ToLower() == "uploader")
-            {
-                return true;
-            }
-            return false;
+            return role.Name.ToLower() == "uploader";
         }
 
         public async Task DeleteUser(string username)
         {
             var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem Id ne obstaja!");
+                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             context.User.Remove(user);
             await context.SaveChangesAsync();
         }
@@ -266,7 +261,7 @@
         {
             // TODO - db lookup
             // No request found -> return null
-            return (RoleRequestStatus)new Random().Next(0, 3);
+            return (RoleRequestStatus) new Random().Next(0, 3);
         }
     }
 }

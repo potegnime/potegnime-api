@@ -4,18 +4,13 @@ namespace PotegniMe.Models.Main;
 
 public class Notification
 {
-    [Key]
-    public required int NotificationId { get; set; }
+    public int NotificationId { get; set; }
 
-    [Required]
     public required string Title { get; set; }
 
-    [Required]
     public required string Description { get; set; }
 
-    [Required]
-    public required NotificationType NotificationType { get; set; }
+    public NotificationType NotificationType { get; set; }
 
-    public virtual ICollection<UserNotification> UserNotification { get; } = new List<UserNotification>();
-
+    public ICollection<UserNotification> UserNotifications { get; } = new List<UserNotification>();
 }
