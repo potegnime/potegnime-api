@@ -50,8 +50,7 @@ public class EncryptionService : IEncryptionService
         aes.IV = iv;
 
         using var decryptor = aes.CreateDecryptor();
-        var plainBytes = decryptor.TransformFinalBlock(
-            cipherBytes, 0, cipherBytes.Length);
+        var plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
 
         return Encoding.UTF8.GetString(plainBytes);
     }
