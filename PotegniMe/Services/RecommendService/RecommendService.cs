@@ -49,28 +49,22 @@ namespace PotegniMe.Services.RecommendService
             return newRecommendation;
         }
 
-        public async Task<Recommendation> GetRecommendation(DateOnly datetime, string type)
+        public async Task<Recommendation> GetRecommendation(DateOnly date, string type)
         {
             type = type.ToLower();
             if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
-            Recommendation recommendation = await _context.Recommendation.FirstOrDefaultAsync(
-                r => r.Date.Equals(datetime) && r.Type.Equals(type))
-                ?? throw new ArgumentException();
-            return recommendation;
+            
+            return await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
+                   ?? throw new ArgumentException("Recommendation not found");
         }
 
-        public async Task DeleteRecommendation(DateOnly datetime, string type)
+        public async Task DeleteRecommendation(DateOnly date, string type)
         {
             type = type.ToLower();
             if (type != "movie" && type != "series") throw new ArgumentException("Tip mora imeti vrednost movie ali series");
 
-            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(
-                r => r.Date.Equals(datetime) && r.Type.Equals(type)
-            );
-            if (recommendation == null)
-            {
-                throw new ArgumentException();
-            }
+            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(r => r.Date == date && r.Type == type)
+                                 ?? throw new ArgumentException("Recommendation not found");
             _context.Recommendation.Remove(recommendation);
             await _context.SaveChangesAsync();
         }
@@ -86,10 +80,9 @@ namespace PotegniMe.Services.RecommendService
             int randomMovieOnPage = random.Next(1, 20);
 
             string tmdbUrlBase = _tmdbUrlBase + "discover/movie";
-            string tmdbUrlInit = tmdbUrlBase + $"?api_key={this._tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
+            string tmdbUrlInit = tmdbUrlBase + $"?api_key={_tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
             using HttpClient httpClient = new HttpClient();
-
             HttpResponseMessage response = await httpClient.GetAsync(tmdbUrlInit);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync();
