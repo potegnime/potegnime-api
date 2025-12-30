@@ -20,29 +20,25 @@ namespace PotegniMe.Controllers
             if (!await userService.IsAdmin(username)) return Unauthorized();
             
             updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
-            if (
-                updateRoleDto.RoleName != "admin" &&
-                updateRoleDto.RoleName != "user" &&
-                updateRoleDto.RoleName != "uploader"
-                )
+            if (updateRoleDto.RoleName != "admin" && updateRoleDto.RoleName != "user" && updateRoleDto.RoleName != "uploader")
             {
                 return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
             }
 
-            await adminService.UpdateRole(username, updateRoleDto.RoleName);
+            await adminService.UpdateRole(updateRoleDto.Username, updateRoleDto.RoleName);
             return Ok();
         }
 
         [HttpDelete("adminDelete"), Authorize]
-        public async Task<ActionResult> AdminDelete(string usernameToDelete)
+        public async Task<ActionResult> AdminDelete(string username)
         {
             // Check if user is admin
-            var username = User.FindFirstValue("username");
-            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-            if (!await userService.IsAdmin(username)) return Unauthorized();
+            var userUsername = User.FindFirstValue("username");
+            if (string.IsNullOrWhiteSpace(userUsername)) return Unauthorized();
+            if (!await userService.IsAdmin(userUsername)) return Unauthorized();
             
-            await userService.GetUserByUsername(usernameToDelete); // throws NotFoundException if user doesn't exist
-            await userService.DeleteUser(usernameToDelete);
+            await userService.GetUserByUsername(username); // throws NotFoundException if user doesn't exist
+            await userService.DeleteUser(username);
             return Ok();
         }
 
