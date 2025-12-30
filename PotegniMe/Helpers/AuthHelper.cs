@@ -20,5 +20,4 @@ public static class AuthHelper
 
         return new string(chars);
     }
-    
 }

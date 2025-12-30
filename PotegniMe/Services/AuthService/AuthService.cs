@@ -66,8 +66,6 @@ namespace PotegniMe.Services.AuthService
             // Add new user instance to the database
             context.User.Add(newUser);
             await context.SaveChangesAsync();
-            // Save changes to the database
-            await context.SaveChangesAsync();
             return GenerateJwtTokenString(newUser);
         }
 
@@ -116,7 +114,7 @@ namespace PotegniMe.Services.AuthService
                 Dictionary<string, string> templateData = new()
             {
                 { "username", user.Username },
-                { "reset_link", $"{baseUrl}ponastavi-geslo?token={token}" }
+                { "reset_link", $"{baseUrl}reset-password?token={token}" }
             };
                 await emailService.SendEmailAsync(userEmail, templateData);
             }
@@ -134,12 +132,12 @@ namespace PotegniMe.Services.AuthService
 
             // Check token validity
             User user = await context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
-                throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
+                throw new ArgumentException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
             // Check if token is expired
             if (user.PasswordResetTokenExpiration < DateTime.UtcNow)
             {
-                throw new ExpiredTokenException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
+                throw new ArgumentException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
             }
 
             // Reset password and delete token + expiration
