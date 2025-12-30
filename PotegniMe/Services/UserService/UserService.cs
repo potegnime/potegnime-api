@@ -8,7 +8,7 @@
         {
             try
             {
-                return await context.User.ToListAsync();
+                return await context.Users.ToListAsync();
             }
             catch (Exception e)
             {
@@ -20,7 +20,7 @@
         {
             try
             {
-                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
                 return user != null;
             }
             catch (Exception e)
@@ -33,7 +33,7 @@
         {
             try
             {
-                var user = await context.User.FirstOrDefaultAsync(u => u.Username == username);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
                 return user != null;
             }
             catch (Exception e)
@@ -46,7 +46,7 @@
         {
             try
             {
-                var user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId);
+                var user = await context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
                 return user != null;
             }
             catch (Exception e)
@@ -63,7 +63,7 @@
             newUsername = newUsername.Trim().ToLower();
 
             // Check if username is already taken
-            if (await context.User.AnyAsync(u => u.Username == newUsername))
+            if (await context.Users.AnyAsync(u => u.Username == newUsername))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem uporabniškim imenom že obstaja!");
             }
@@ -79,7 +79,7 @@
             newEmail = newEmail.Trim().ToLower();
 
             // Check if email is already taken
-            if (await context.User.AnyAsync(u => u.Email == newEmail))
+            if (await context.Users.AnyAsync(u => u.Email == newEmail))
             {
                 throw new ConflictExceptionDto("Uporabnik s tem e-poštnim naslovom že obstaja!");
             }
@@ -209,7 +209,7 @@
 
         public async Task<User> GetUserByUsername(string username)
         {
-            User user = await context.User
+            User user = await context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
             return user;
@@ -217,14 +217,14 @@
 
         public async Task<User> GetUserByEmail(string email)
         {
-            User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ??
+            User user = await context.Users.FirstOrDefaultAsync(u => u.Email == email) ??
                 throw new NotFoundException();
             return user;
         }
 
         public async Task<Role> GetUserRole(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
             // Load role relation
             context.Entry(user).Reference(x => x.Role).Load();
@@ -256,9 +256,9 @@
 
         public async Task DeleteUser(string username)
         {
-            var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-                throw new Exception("Uporabnik s tem Id ne obstaja!");
-            context.User.Remove(user);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username) ??
+                throw new Exception("Uporabnik s tem uporabniškim imenom ne obstaja!");
+            context.Users.Remove(user);
             await context.SaveChangesAsync();
         }
 

@@ -27,13 +27,13 @@ namespace PotegniMe.Services.RecommendService
         public async Task<Recommendation> SetRecommendation(Recommendation recommendation)
         {
             // Check if recommendation already exists for the given day
-            var todaysRecommendation = await _context.Recommendation.FirstOrDefaultAsync(
+            var todayRecommendation = await _context.Recommendations.FirstOrDefaultAsync(
                 r => r.Date.Equals(recommendation.Date) && r.Type.Equals(recommendation.Type)
             );
-            if (todaysRecommendation != null)
+            if (todayRecommendation != null)
             {
                 // Recommendation already exists, delete it from the database
-                _context.Recommendation.Remove(todaysRecommendation);
+                _context.Recommendations.Remove(todayRecommendation);
                 await _context.SaveChangesAsync();
             }
             // Set new recommendation
@@ -43,14 +43,14 @@ namespace PotegniMe.Services.RecommendService
                 Type = recommendation.Type,
                 Name = recommendation.Name
             };
-            _context.Recommendation.Add(newRecommendation);
+            _context.Recommendations.Add(newRecommendation);
             await _context.SaveChangesAsync();
             return newRecommendation;
         }
 
         public async Task<Recommendation> GetRecommendation(DateOnly datetime, string type)
         {
-            Recommendation recommendation = await _context.Recommendation.FirstOrDefaultAsync(
+            Recommendation recommendation = await _context.Recommendations.FirstOrDefaultAsync(
                 r => r.Date.Equals(datetime) && r.Type.Equals(type))
              ?? throw new ArgumentException();
             return recommendation;
@@ -58,14 +58,14 @@ namespace PotegniMe.Services.RecommendService
 
         public async Task DeleteRecommendation(DateOnly datetime, string type)
         {
-            var recommendation = await _context.Recommendation.FirstOrDefaultAsync(
+            var recommendation = await _context.Recommendations.FirstOrDefaultAsync(
                 r => r.Date.Equals(datetime) && r.Type.Equals(type)
             );
             if (recommendation == null)
             {
                 throw new ArgumentException();
             }
-            _context.Recommendation.Remove(recommendation);
+            _context.Recommendations.Remove(recommendation);
             await _context.SaveChangesAsync();
         }
 
@@ -79,8 +79,8 @@ namespace PotegniMe.Services.RecommendService
             int randomPage = random.Next(1, 100);
             int randomMovieOnPage = random.Next(1, 20);
 
-            string tmdbUrlBase = this._tmdbUrlBase + "discover/movie";
-            string tmdbUrlInit = tmdbUrlBase += $"?api_key={this._tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
+            string tmdbUrlBase = _tmdbUrlBase + "discover/movie";
+            string tmdbUrlInit = tmdbUrlBase + $"?api_key={this._tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={randomPage}&with_watch_monetization_types={watchMonetizationType}";
 
             using HttpClient httpClient = new HttpClient();
 

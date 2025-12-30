@@ -4,18 +4,18 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
+using PotegniMe.Helpers;
 using PotegniMe.Services.EmailService;
+using PotegniMe.Services.EncryptionService;
 using PotegniMe.Services.UserService;
 
 namespace PotegniMe.Services.AuthService
 {
-    public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IConfiguration configuration) : IAuthService
+    public class AuthService(DataContext context, IUserService userService, IEmailService emailService, IEncryptionService encryptionService, IConfiguration configuration) : IAuthService
     {
-        // Fields
-        private readonly String _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
-                      throw new Exception("Cannot find TMDB API KEY");
+        private readonly string _appKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ??
+                      throw new Exception("Cannot find POTEGNIME_APP_KEY");
 
-        // Methods
         public async Task<string> GenerateJwtToken(string username)
         {
             if (!await userService.UserExists(username))
@@ -23,7 +23,7 @@ namespace PotegniMe.Services.AuthService
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
             }
 
-            User user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ??
+            User user = await context.Users.FirstOrDefaultAsync(u => u.Username == username) ??
                 throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
 
             return GenerateJwtTokenString(user);
@@ -50,8 +50,10 @@ namespace PotegniMe.Services.AuthService
             }
             string salt = GenerateSalt();
             string hashedPassword = HashPassword(request.Password, salt);
+            string passkey = AuthHelper.GeneratePasskey();
+            string passkeyCipher = encryptionService.Encrypt(passkey);
 
-            Role role = context.Role.FirstOrDefault(r => r.Name == "user") ??
+            Role role = context.Roles.FirstOrDefault(r => r.Name == "user") ??
                 throw new ArgumentException("Role not found");
             User newUser = new User
             {
@@ -62,10 +64,11 @@ namespace PotegniMe.Services.AuthService
                 ProfilePicFilePath = null,
                 JoinedDate = DateTime.UtcNow,
                 RoleId = role.RoleId,
-                Role = role
+                Role = role,
+                PasskeyCipher = passkeyCipher
             };
             // Add new user instance to the database
-            context.User.Add(newUser);
+            context.Users.Add(newUser);
             await context.SaveChangesAsync();
             // Save changes to the database
             await context.SaveChangesAsync();
@@ -158,7 +161,7 @@ namespace PotegniMe.Services.AuthService
             string newPassword = resetPasswordDto.Password;
 
             // Check token validity
-            User user = await context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
+            User user = await context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
                 throw new InvalidTokenException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
             // Check if token is expired
