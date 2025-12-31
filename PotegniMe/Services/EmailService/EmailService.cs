@@ -6,7 +6,6 @@ namespace PotegniMe.Services.EmailService
 {
     public class EmailService : IEmailService
     {
-        // Fields
         private readonly IConfiguration _configuration;
         private readonly string _sendGridApiKey;
         private readonly string _sendGridPasswordResetTemplateId;

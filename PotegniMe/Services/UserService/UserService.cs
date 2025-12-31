@@ -4,8 +4,6 @@ namespace PotegniMe.Services.UserService
 {
     public class UserService(DataContext context, IConfiguration configuration) : IUserService
     {
-
-        // Methods
         public async Task<List<User>> GetAllUsers()
         {
             return await context.User.ToListAsync();

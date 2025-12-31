@@ -4,7 +4,6 @@ namespace PotegniMe.Services.AdminService
 {
     public class AdminService(DataContext context, IUserService userService) : IAdminService
     {
-        // Methods
         public async Task UpdateRole(string username, string roleName)
         {
             Role role = context.Role.FirstOrDefault(r => r.Name == roleName) ?? throw new ArgumentException("Role not found");
