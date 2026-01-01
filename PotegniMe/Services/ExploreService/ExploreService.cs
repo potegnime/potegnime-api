@@ -6,20 +6,11 @@ using PotegniMe.Helpers.Tmdb;
 namespace PotegniMe.Services.ExploreService;
 // Explore is done via TMDB API https://developer.themoviedb.org/reference/intro/getting-started
 
-public class ExploreService : IExploreService
+public class ExploreService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IMemoryCache cache ) : IExploreService
 {
-    private readonly HttpClient _httpClient;
-    private readonly IMemoryCache _cache;
-    private readonly string _tmdbUrlBase;
-    private readonly string _tmdbApiKey;
-    
-    public ExploreService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IMemoryCache cache)
-    {
-        _httpClient = httpClientFactory.CreateClient();
-        _cache = cache;
-        _tmdbUrlBase = configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
-        _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_TMDB_KEY");
-    }
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+    private readonly string _tmdbUrlBase = configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
+    private readonly string _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_TMDB_KEY");
     
     public async Task<Recommendation> RandomRecommendation()
     {
@@ -33,15 +24,12 @@ public class ExploreService : IExploreService
         int indexOnPage = random.Next(0, 20);
 
         var url = $"{_tmdbUrlBase}discover/movie?api_key={_tmdbApiKey}&language={language}&sort_by=popularity.desc&include_adult={includeAdult}&include_video={includeVideo}&page={page}&with_watch_monetization_types={monetizationType}";
-
         var response = await _httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
         var tmdbResponse = JsonSerializer.Deserialize<TmdbMovieApiResponse>(json) ?? throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API returned null");
-
-        if (tmdbResponse.Results == null || !tmdbResponse.Results.Any())
-            throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API returned empty results");
+        if (tmdbResponse.Results == null || !tmdbResponse.Results.Any()) throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API returned empty results");
 
         indexOnPage = Math.Min(indexOnPage, tmdbResponse.Results.Count - 1);
         var movie = tmdbResponse.Results[indexOnPage];
@@ -175,7 +163,7 @@ public class ExploreService : IExploreService
     
     private async Task<T> GetOrSetCacheAsync<T>(string cacheKey, Func<Task<T>> fetchFunc, TimeSpan? expiration = null)
     {
-        if (_cache.TryGetValue<T?>(cacheKey, out var cached) && cached != null) return cached;
+        if (cache.TryGetValue<T?>(cacheKey, out var cached) && cached != null) return cached;
 
         var result = await fetchFunc();
         var options = new MemoryCacheEntryOptions
@@ -183,7 +171,7 @@ public class ExploreService : IExploreService
             AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromHours(Constants.Constants.TmdbCacheHours)
         };
 
-        _cache.Set(cacheKey, result, options);
+        cache.Set(cacheKey, result, options);
         return result;
     }
 }
