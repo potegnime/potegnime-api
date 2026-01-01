@@ -2,10 +2,16 @@ namespace PotegniMe.Constants;
 
 public static class Constants
 {
+    // Error codes
+    public static readonly string DotEnvErrorCode = "POTEGNIME_DOTENV_ERROR";
+    public static readonly string AppSettingsErrorCode = "POTEGNIME_APPSETTINGS_ERROR";
+    public static readonly string InternalErrorCode = "POTEGNIME_INTERNAL_ERROR";
+    
+    // TMDB related
+    public static readonly int TmdbCacheHours = 1; // 1h
     public static readonly string TmdbLanguageEnUs = "en-US";
     public static readonly string TmdbLanguageSlSi = "sl-SI";
     public static readonly  string DefaultTimeWindow = "day";
-
     public static readonly  IDictionary<int, string> TmdbGenresEng = new Dictionary<int, string>
     {
         { 28, "Action" },
@@ -36,7 +42,6 @@ public static class Constants
         { 10767, "Talk" },
         { 10768, "War & Politics" }
     };
-
     public static readonly  IDictionary<int, string> TmdbGenresSl = new Dictionary<int, string>
     {
         { 28, "Akcija" },
@@ -67,8 +72,4 @@ public static class Constants
         { 10767, "Pogovorna oddaja" },
         { 10768, "Vojna & Politika" }
     };
-
-    public static readonly string DotEnvErrorCode = "POTEGNIME_DOTENV_ERROR";
-    public static readonly string AppSettingsErrorCode = "POTEGNIME_APPSETTINGS_ERROR";
-    public static readonly string InternalErrorCode = "POTEGNIME_INTERNAL_ERROR";
 }

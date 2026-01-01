@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using PotegniMe.DTOs.Recommend;
 using PotegniMe.Helpers.Tmdb;
 
@@ -7,16 +8,16 @@ namespace PotegniMe.Services.ExploreService;
 
 public class ExploreService : IExploreService
 {
-    private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
+    private readonly IMemoryCache _cache;
     private readonly string _tmdbUrlBase;
     private readonly string _tmdbApiKey;
     
-    public ExploreService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public ExploreService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IMemoryCache cache)
     {
-        _configuration = configuration;
         _httpClient = httpClientFactory.CreateClient();
-        _tmdbUrlBase = _configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
+        _cache = cache;
+        _tmdbUrlBase = configuration["Tmdb:Url"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} Tmdb:Url");
         _tmdbApiKey = Environment.GetEnvironmentVariable("POTEGNIME_TMDB_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_TMDB_KEY");
     }
     
@@ -76,12 +77,20 @@ public class ExploreService : IExploreService
 
     public async Task<List<TmdbTrendingResponse>> TrendingMovie(string lang)
     {
-        return MapTrending(await HttpFetch<TmdbMovieApiResponse>($"trending/movie/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: false);
+        string cacheKey = $"trending_movie_{lang}";
+        var data = await GetOrSetCacheAsync(cacheKey, async () => MapTrending(
+                await HttpFetch<TmdbMovieApiResponse>($"trending/movie/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: false), 
+        TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+        return data;
     }
 
     public async Task<List<TmdbTrendingResponse>> TrendingTv(string lang)
     {
-        return MapTrending(await HttpFetch<TmdbMovieApiResponse>($"trending/tv/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: true);
+        string cacheKey = $"trending_tv_{lang}";
+        var data = await GetOrSetCacheAsync(cacheKey, async () => MapTrending(
+                await HttpFetch<TmdbMovieApiResponse>($"trending/tv/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: true),
+        TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+        return data;
     }
 
     // Helper methods
@@ -91,18 +100,23 @@ public class ExploreService : IExploreService
         return Constants.Constants.TmdbGenresSl.TryGetValue(genreId, out var s) ? s : "Neznana kategorija";
     }
     
-            private async Task<List<TmdbMovieResponse>> GetMovieList(string endpoint, string lang, int page, string region)
+    private async Task<List<TmdbMovieResponse>> GetMovieList(string endpoint, string lang, int page, string region)
     {
         ValidateLanguage(lang);
-        TmdbMovieApiResponse data = await HttpFetch<TmdbMovieApiResponse>(endpoint, lang, $"page={page}&region={region}");
-        return data.Results.Select(m => new TmdbMovieResponse
+
+        string cacheKey = $"{endpoint}_{lang}_{page}_{region}";
+        return await GetOrSetCacheAsync(cacheKey, async () =>
         {
-            Title = m.Title,
-            Description = m.Overview,
-            ReleaseDate = m.Release_Date,
-            ImageUrl = m.Poster_Path,
-            Genres = m.Genre_Ids.Select(id => GetGenreName(id, lang)).ToList()
-        }).ToList();
+            TmdbMovieApiResponse data = await HttpFetch<TmdbMovieApiResponse>(endpoint, lang, $"page={page}&region={region}");
+            return data.Results.Select(m => new TmdbMovieResponse
+            {
+                Title = m.Title,
+                Description = m.Overview,
+                ReleaseDate = m.Release_Date,
+                ImageUrl = m.Poster_Path,
+                Genres = m.Genre_Ids.Select(id => GetGenreName(id, lang)).ToList()
+            }).ToList();
+        });
     }
 
     private async Task<T> HttpFetch<T>(string endpoint, string lang, string? extra = null)
@@ -111,11 +125,8 @@ public class ExploreService : IExploreService
 
         var res = await _httpClient.GetAsync(url);
         res.EnsureSuccessStatusCode();
-
-        return JsonSerializer.Deserialize<T>(
-            await res.Content.ReadAsStringAsync()) ?? 
-               throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB null response"
-            );
+        var data = await res.Content.ReadAsStringAsync() ?? throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB null response");
+        return JsonSerializer.Deserialize<T>(data)!;
     }
     
     private static void ValidateLanguage(string lang)
@@ -144,4 +155,17 @@ public class ExploreService : IExploreService
         }).ToList();
     }
     
+    private async Task<T> GetOrSetCacheAsync<T>(string cacheKey, Func<Task<T>> fetchFunc, TimeSpan? expiration = null)
+    {
+        if (_cache.TryGetValue<T?>(cacheKey, out var cached) && cached != null) return cached;
+
+        var result = await fetchFunc();
+        var options = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromHours(Constants.Constants.TmdbCacheHours)
+        };
+
+        _cache.Set(cacheKey, result, options);
+        return result;
+    }
 }
