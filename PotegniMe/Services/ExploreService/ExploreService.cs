@@ -78,18 +78,37 @@ public class ExploreService : IExploreService
     public async Task<List<TmdbTrendingResponse>> TrendingMovie(string lang)
     {
         string cacheKey = $"trending_movie_{lang}";
-        var data = await GetOrSetCacheAsync(cacheKey, async () => MapTrending(
-                await HttpFetch<TmdbMovieApiResponse>($"trending/movie/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: false), 
-        TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+        var data = await GetOrSetCacheAsync(cacheKey, async () =>
+        {
+            var tmdbResponse = await HttpFetch<TmdbMovieApiResponse>($"trending/movie/{Constants.Constants.DefaultTimeWindow}", lang);
+            if (tmdbResponse.Results == null || !tmdbResponse.Results.Any()) return new List<TmdbTrendingResponse>();
+
+            return tmdbResponse.Results.Select(x => new TmdbTrendingResponse
+            {
+                Title = x.Title,
+                Description = x.Overview,
+                ImageUrl = x.PosterPath,
+                Genres = x.GenreIds.Select(id => GetGenreName(id, lang)).ToList()
+            }).ToList();
+        }, TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+
         return data;
     }
 
     public async Task<List<TmdbTrendingResponse>> TrendingTv(string lang)
     {
         string cacheKey = $"trending_tv_{lang}";
-        var data = await GetOrSetCacheAsync(cacheKey, async () => MapTrending(
-                await HttpFetch<TmdbMovieApiResponse>($"trending/tv/{Constants.Constants.DefaultTimeWindow}", lang), lang, isTv: true),
-        TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+        var data = await GetOrSetCacheAsync(cacheKey, async () => {
+            var tmdbResponse = await HttpFetch<TmdbTrendingApiResponse>($"trending/tv/{Constants.Constants.DefaultTimeWindow}", lang);
+            return tmdbResponse.Results.Select(x => new TmdbTrendingResponse
+            {
+                Title = x.Name,
+                Description = x.Overview,
+                ImageUrl = x.PosterPath,
+                Genres = x.GenreIds.Select(id => GetGenreName(id, lang)).ToList()
+            }).ToList();
+        }, TimeSpan.FromHours(Constants.Constants.TmdbCacheHours));
+
         return data;
     }
 
@@ -112,9 +131,9 @@ public class ExploreService : IExploreService
             {
                 Title = m.Title,
                 Description = m.Overview,
-                ReleaseDate = m.Release_Date,
-                ImageUrl = m.Poster_Path,
-                Genres = m.Genre_Ids.Select(id => GetGenreName(id, lang)).ToList()
+                ReleaseDate = m.ReleaseDate,
+                ImageUrl = m.PosterPath,
+                Genres = m.GenreIds.Select(id => GetGenreName(id, lang)).ToList()
             }).ToList();
         });
     }

@@ -11,11 +11,11 @@ public class TmdbMovie
     public required string Overview { get; set; }
 
     [JsonPropertyName("release_date")]
-    public required string Release_Date { get; set; }
+    public required string ReleaseDate { get; set; }
 
     [JsonPropertyName("poster_path")]
-    public required string Poster_Path { get; set; }
+    public required string PosterPath { get; set; }
 
     [JsonPropertyName("genre_ids")]
-    public required List<int> Genre_Ids { get; set; }
+    public required List<int> GenreIds { get; set; }
 }
