@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace PotegniMe.Controllers
+namespace PotegniMe.Controllers;
+
+[Route("")]
+[ApiController]
+public class RootController : ControllerBase
 {
-    [Route("")]
-    [ApiController]
-    public class RootController : ControllerBase
+    [HttpGet, AllowAnonymous]
+    public ActionResult Root()
     {
-        [HttpGet, AllowAnonymous]
-        public ActionResult Root()
-        {
-            return StatusCode(200, "api");
-        }
+        return StatusCode(200, "api");
     }
 }

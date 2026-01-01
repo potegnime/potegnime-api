@@ -1,7 +1,7 @@
-﻿namespace PotegniMe.DTOs.Auth
+﻿namespace PotegniMe.DTOs.Auth;
+
+public class JwtTokenResponseDto
 {
-    public class JwtTokenResponseDto
-    {
-        public required string Token { get; set; }
-    }
+    public required string Token { get; set; }
 }
+

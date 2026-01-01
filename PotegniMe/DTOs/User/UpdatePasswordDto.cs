@@ -1,8 +1,7 @@
-﻿namespace PotegniMe.DTOs.User
+﻿namespace PotegniMe.DTOs.User;
+
+public class UpdatePasswordDto
 {
-    public class UpdatePasswordDto
-    {
-        public required string OldPassword { get; set; }
-        public required string NewPassword { get; set;}
-    }
+    public required string OldPassword { get; set; }
+    public required string NewPassword { get; set;}
 }

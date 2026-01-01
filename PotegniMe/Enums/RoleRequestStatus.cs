@@ -1,9 +1,8 @@
-﻿namespace PotegniMe.Enums
+﻿namespace PotegniMe.Enums;
+
+public enum RoleRequestStatus
 {
-    public enum RoleRequestStatus
-    {
-        Review,
-        Approved,
-        Denied
-    }
+    Review,
+    Approved,
+    Denied
 }

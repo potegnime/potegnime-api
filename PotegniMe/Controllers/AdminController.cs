@@ -5,49 +5,47 @@ using PotegniMe.Services.AdminService;
 using PotegniMe.Services.AuthService;
 using PotegniMe.Services.UserService;
 
-namespace PotegniMe.Controllers
+namespace PotegniMe.Controllers;
+
+[Route("admin")]
+[ApiController]
+public class AdminController(IAuthService authService, IUserService userService, IAdminService adminService) : ControllerBase
 {
-    [Route("admin")]
-    [ApiController]
-    public class AdminController(IAuthService authService, IUserService userService, IAdminService adminService) : ControllerBase
+    [HttpPost("updateRole"), Authorize]
+    public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
     {
-        [HttpPost("updateRole"), Authorize]
-        public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
+        // Check if user is admin
+        var username = User.FindFirstValue("username");
+        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+        if (!await userService.IsAdmin(username)) return Unauthorized();
+        
+        updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
+        if (updateRoleDto.RoleName != "admin" && updateRoleDto.RoleName != "user" && updateRoleDto.RoleName != "uploader")
         {
-            // Check if user is admin
-            var username = User.FindFirstValue("username");
-            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-            if (!await userService.IsAdmin(username)) return Unauthorized();
-            
-            updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
-            if (updateRoleDto.RoleName != "admin" && updateRoleDto.RoleName != "user" && updateRoleDto.RoleName != "uploader")
-            {
-                return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
-            }
-
-            await adminService.UpdateRole(updateRoleDto.Username, updateRoleDto.RoleName);
-            return Ok();
+            return BadRequest(new ErrorResponseDto { ErrorCode = 1, Message = "RoleName mora vsebovati vrednost admin ali uporabnik" });
         }
 
-        [HttpDelete("adminDelete"), Authorize]
-        public async Task<ActionResult> AdminDelete(string username)
-        {
-            // Check if user is admin
-            var userUsername = User.FindFirstValue("username");
-            if (string.IsNullOrWhiteSpace(userUsername)) return Unauthorized();
-            if (!await userService.IsAdmin(userUsername)) return Unauthorized();
-            
-            await userService.GetUserByUsername(username); // throws NotFoundException if user doesn't exist
-            await userService.DeleteUser(username);
-            return Ok();
-        }
+        await adminService.UpdateRole(updateRoleDto.Username, updateRoleDto.RoleName);
+        return Ok();
+    }
 
-        [HttpPost("uploaderRequest"), Authorize]
-        public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
-        {
-            string token = await authService.RegisterAsync(userRegisterDto);
-            return StatusCode(201, new JwtTokenResponseDto { Token = token });
-        }
+    [HttpDelete("adminDelete"), Authorize]
+    public async Task<ActionResult> AdminDelete(string username)
+    {
+        // Check if user is admin
+        var userUsername = User.FindFirstValue("username");
+        if (string.IsNullOrWhiteSpace(userUsername)) return Unauthorized();
+        if (!await userService.IsAdmin(userUsername)) return Unauthorized();
+        
+        await userService.GetUserByUsername(username); // throws NotFoundException if user doesn't exist
+        await userService.DeleteUser(username);
+        return Ok();
+    }
+
+    [HttpPost("uploaderRequest"), Authorize]
+    public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
+    {
+        string token = await authService.RegisterAsync(userRegisterDto);
+        return StatusCode(201, new JwtTokenResponseDto { Token = token });
     }
 }
-
