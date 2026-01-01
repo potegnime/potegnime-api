@@ -1,8 +1,7 @@
-﻿namespace PotegniMe.DTOs.Error
+﻿namespace PotegniMe.DTOs.Error;
+
+public class ErrorResponseDto
 {
-    public class ErrorResponseDto
-    {
-        public required int ErrorCode { get; set; }
-        public required string Message { get; set; }
-    }
+    public required int ErrorCode { get; set; }
+    public required string Message { get; set; }
 }

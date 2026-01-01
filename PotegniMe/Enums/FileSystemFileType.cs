@@ -1,9 +1,8 @@
-﻿namespace PotegniMe.Enums
+﻿namespace PotegniMe.Enums;
+
+public enum FileSystemFileType
 {
-    public enum FileSystemFileType
-    {
-        ProfileImage,
-        TorrentImage,
-        Wysiwyg
-    }
+    ProfileImage,
+    TorrentImage,
+    Wysiwyg
 }

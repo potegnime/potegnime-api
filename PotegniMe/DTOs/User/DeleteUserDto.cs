@@ -1,7 +1,6 @@
-﻿namespace PotegniMe.DTOs.User
+﻿namespace PotegniMe.DTOs.User;
+
+public class DeleteUserDto
 {
-    public class DeleteUserDto
-    {
-        public required string Password { get; set; }
-    }
+    public required string Password { get; set; }
 }

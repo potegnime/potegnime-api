@@ -1,6 +1,3 @@
-﻿namespace PotegniMe.Core.Exceptions
-{
-    public class ConflictException(string message) : Exception(message)
-    {
-    }
-}
+﻿namespace PotegniMe.Core.Exceptions;
+
+public class ConflictException(string message) : Exception(message) { }

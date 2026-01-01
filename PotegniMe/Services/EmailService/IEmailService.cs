@@ -1,7 +1,6 @@
-﻿namespace PotegniMe.Services.EmailService
+﻿namespace PotegniMe.Services.EmailService;
+    
+public interface IEmailService
 {
-    public interface IEmailService
-    {
-        Task SendEmailAsync(string userEmail, Dictionary<string, string> templateData);
-    }
+    Task SendEmailAsync(string userEmail, Dictionary<string, string> templateData);
 }

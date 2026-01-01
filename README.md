@@ -34,6 +34,7 @@ API runs on http://localhost:5194. Swagger is available at http://localhost:5194
 
 - Use primary constructors when creating new classes
 - Check for unused using statements before committing
+- Use [file scoped](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/file-scoped-namespaces) namespaces
 
 ## Deployment
 

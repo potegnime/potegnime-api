@@ -1,11 +1,11 @@
-﻿namespace PotegniMe.Enums
+﻿namespace PotegniMe.Enums;
+
+public enum NotificationType
 {
-    public enum NotificationType
-    {
-        System,
-        RoleUpdate,
-        Message,
-        Like,
-        Comment
-    }
+    System,
+    RoleUpdate,
+    Message,
+    Like,
+    Comment
 }
+

@@ -2,50 +2,48 @@
 using System.Security.Claims;
 using PotegniMe.Services.AuthService;
 
-namespace PotegniMe.Controllers
+namespace PotegniMe.Controllers;
+
+[Route("auth")]
+[ApiController]
+public class AuthController(IAuthService authService) : ControllerBase
 {
-    [Route("auth")]
-    [ApiController]
-    public class AuthController(IAuthService authService) : ControllerBase
+    [HttpPost("register"), AllowAnonymous]
+    public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto userRegisterDto)
     {
-        [HttpPost("register"), AllowAnonymous]
-        public async Task<ActionResult<string>> Register([FromBody] UserRegisterDto userRegisterDto)
-        {
-            string token = await authService.RegisterAsync(userRegisterDto);
-            return StatusCode(201, new JwtTokenResponseDto { Token= token });
-        }
+        string token = await authService.RegisterAsync(userRegisterDto);
+        return StatusCode(201, new JwtTokenResponseDto { Token= token });
+    }
 
-        [HttpPost("login"), AllowAnonymous]
-        public async Task<ActionResult<string>> Login([FromBody] UserLoginDto userLoginDto)
-        {
-            var token = await authService.LoginAsync(userLoginDto);
-            return Ok(new JwtTokenResponseDto { Token = token });
-        }
+    [HttpPost("login"), AllowAnonymous]
+    public async Task<ActionResult<string>> Login([FromBody] UserLoginDto userLoginDto)
+    {
+        var token = await authService.LoginAsync(userLoginDto);
+        return Ok(new JwtTokenResponseDto { Token = token });
+    }
 
-        [HttpPost("refresh"), Authorize]
-        public async Task<ActionResult<string>> RefreshToken()
-        {
-            var username = User.FindFirstValue("username");
-            if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-            
-            var token = await authService.GenerateJwtToken(username);
-            return Ok(new JwtTokenResponseDto { Token = token });
-        }
+    [HttpPost("refresh"), Authorize]
+    public async Task<ActionResult<string>> RefreshToken()
+    {
+        var username = User.FindFirstValue("username");
+        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+        
+        var token = await authService.GenerateJwtToken(username);
+        return Ok(new JwtTokenResponseDto { Token = token });
+    }
 
-        [HttpPost("forgotPassword"), AllowAnonymous]
-        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
-        {
-            await authService.ForgotPassword(forgotPasswordDto);
-            return Ok();
-        }
+    [HttpPost("forgotPassword"), AllowAnonymous]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+    {
+        await authService.ForgotPassword(forgotPasswordDto);
+        return Ok();
+    }
 
-        [HttpPost("resetPassword"), AllowAnonymous]
-        public async Task<ActionResult<string>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
-        {
+    [HttpPost("resetPassword"), AllowAnonymous]
+    public async Task<ActionResult<string>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+    {
 
-            string jwt = await authService.ResetPassword(resetPasswordDto);
-            return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
-        }
+        string jwt = await authService.ResetPassword(resetPasswordDto);
+        return StatusCode(201, new JwtTokenResponseDto { Token = jwt });
     }
 }
-

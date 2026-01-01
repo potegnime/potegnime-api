@@ -1,7 +1,6 @@
-﻿namespace PotegniMe.DTOs.Auth
+﻿namespace PotegniMe.DTOs.Auth;
+
+public class ForgotPasswordDto
 {
-    public class ForgotPasswordDto
-    {
-        public required string Email { get; set; }
-    }
+    public required string Email { get; set; }
 }
