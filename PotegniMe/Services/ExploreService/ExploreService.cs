@@ -43,7 +43,6 @@ public class ExploreService : IExploreService
         if (tmdbResponse.Results == null || !tmdbResponse.Results.Any())
             throw new Exception($"{Constants.Constants.InternalErrorCode} TMDB API returned empty results");
 
-        // Ensure random index is within bounds
         indexOnPage = Math.Min(indexOnPage, tmdbResponse.Results.Count - 1);
         var movie = tmdbResponse.Results[indexOnPage];
 
