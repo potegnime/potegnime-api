@@ -93,6 +93,9 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
 );
 
 // Map services
+builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
@@ -100,7 +103,6 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IExploreService, ExploreService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddHttpClient();
 
 // CORS
 builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
