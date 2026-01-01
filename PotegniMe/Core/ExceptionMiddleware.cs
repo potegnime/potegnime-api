@@ -15,7 +15,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception");
+            logger.LogError(ex, Constants.Constants.InternalErrorCode);
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -49,13 +49,12 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
                 break;
             default:
                 status = HttpStatusCode.InternalServerError;
-                response = new ErrorResponseDto { ErrorCode = 2, Message = "Internal server error." };
+                response = new ErrorResponseDto { ErrorCode = 2, Message = "Internal server error :(" };
                 break;
         }
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)status;
-        
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
