@@ -20,6 +20,7 @@ using DotNetEnv;
 using PotegniMe.Constants;
 using PotegniMe.Core;
 using PotegniMe.Services.EncryptionService;
+using PotegniMe.Services.ExploreService;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,13 +92,15 @@ builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(
     )
 );
 
-// Program services
+// Map services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
+builder.Services.AddScoped<IExploreService, ExploreService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient();
 
 // CORS
 builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
