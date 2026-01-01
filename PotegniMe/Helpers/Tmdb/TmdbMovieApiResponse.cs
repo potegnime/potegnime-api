@@ -5,5 +5,5 @@ namespace PotegniMe.Helpers.Tmdb;
 public class TmdbMovieApiResponse
 {
     [JsonPropertyName("results")]
-    public List<TmdbMovie>? Results { get; set; }
+    public required List<TmdbMovie> Results { get; set; }
 }

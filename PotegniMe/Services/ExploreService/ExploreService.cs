@@ -68,7 +68,7 @@ public class ExploreService(IConfiguration configuration, IHttpClientFactory htt
         var data = await GetOrSetCacheAsync(cacheKey, async () =>
         {
             var tmdbResponse = await HttpFetch<TmdbMovieApiResponse>($"trending/movie/{Constants.Constants.DefaultTimeWindow}", lang);
-            if (tmdbResponse.Results == null || !tmdbResponse.Results.Any()) return new List<TmdbTrendingResponse>();
+            if (!tmdbResponse.Results.Any()) return new List<TmdbTrendingResponse>();
 
             return tmdbResponse.Results.Select(x => new TmdbTrendingResponse
             {
@@ -141,24 +141,6 @@ public class ExploreService(IConfiguration configuration, IHttpClientFactory htt
         {
             throw new ArgumentException("Unsupported language");
         }
-    }
-    
-    private static List<TmdbTrendingResponse> MapTrending<T>(T response, string lang, bool isTv) where T : class
-    {
-        IEnumerable<dynamic> results = response switch
-        {
-            TmdbMovieApiResponse m => m.Results,
-            TmdbTrendingApiResponse t => t.Results,
-            _ => throw new ArgumentException("Invalid response")
-        };
-
-        return results.Select((x) => new TmdbTrendingResponse
-        {
-            Title = isTv ? x.Name : x.Title,
-            Description = x.Overview,
-            ImageUrl = x.Poster_Path,
-            Genres = ((IEnumerable<int>)x.Genre_Ids).Select(id => GetGenreName(id, lang)).ToList()
-        }).ToList();
     }
     
     private async Task<T> GetOrSetCacheAsync<T>(string cacheKey, Func<Task<T>> fetchFunc, TimeSpan? expiration = null)
