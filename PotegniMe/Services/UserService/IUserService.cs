@@ -35,6 +35,9 @@ public interface IUserService
 
     // Get user by email
     Task<User> GetUserByEmail(string email);
+    
+    // Get user by refresh token
+    Task<User> GetUserByRefreshToken(string refreshToken);
 
     // Get user role
     Task<Role> GetUserRole(string username);

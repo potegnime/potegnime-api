@@ -18,6 +18,10 @@ public class User
     public required string PasswordHash { get; set; }
 
     public required string PasswordSalt { get; set; }
+    
+    public string? RefreshToken { get; set; }
+    
+    public DateTime? RefreshTokenExpiration { get; set; }
 
     public string? ProfilePicFilePath { get; set; }
 

@@ -189,6 +189,12 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
         User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ?? throw new NotFoundException();
         return user;
     }
+    
+    public async Task<User> GetUserByRefreshToken(string refreshToken)
+    {
+        User user = await context.User.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken) ?? throw new NotFoundException();
+        return user;
+    }
 
     public async Task<Role> GetUserRole(string username)
     {

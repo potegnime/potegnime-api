@@ -32,22 +32,74 @@ public class AuthService : IAuthService
         string privateKeyPath = Path.Combine(projectRoot, "keys", "private.pem");
         _privateRsa = AuthHelper.LoadPrivateKey(privateKeyPath);
     }
-
-    public async Task<string> GenerateJwtToken(string username)
+    
+    public string GenerateAccessToken(User user)
     {
-        if (!await _userService.UserExists(username)) throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
+        _context.Entry(user).Reference(u => u.Role).Load();
 
-        User user = await _context.User.FirstOrDefaultAsync(u => u.Username == username) ??
-            throw new ArgumentException("Uporabnik s tem uporabniškim imenom ne obstaja!");
+        List<Claim> claims = new List<Claim>
+        {
+            new Claim("username", user.Username),
+            new Claim("email", user.Email),
+            new Claim("role", user.Role.Name.ToLower()),
+            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+        };
 
-        return GenerateJwtTokenString(user);
+        RsaSecurityKey key = new RsaSecurityKey(_privateRsa);
+        SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+
+        JwtSecurityToken token = new JwtSecurityToken(
+            issuer: _configuration.GetSection("AppSettings:Issuer").Value,
+            audience: _configuration.GetSection("AppSettings:Audience").Value,
+            claims: claims,
+            expires: DateTime.UtcNow.AddSeconds(15),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    
+    public async Task SetRefreshToken(HttpResponse response, User user)
+    {
+        var refreshToken = GenerateRefreshToken();
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiration = DateTime.UtcNow.AddDays(Constants.Constants.RefreshTokenExpDays);
+        await _context.SaveChangesAsync();
+
+        response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = user.RefreshTokenExpiration,
+            Path = "/"
+        });
     }
 
-    public async Task<string> RegisterAsync(UserRegisterDto request)
+    public async Task<string> LoginAsync(UserLoginDto request, HttpResponse response)
+    {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)) throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
+
+        // Input formatting - nothing cannot end with a trailing space
+        request.Username = request.Username.Trim().ToLower();
+        request.Password = request.Password.Trim();
+
+        // Check if user exists
+        if (!await _userService.UserExists(request.Username)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
+
+        User user = await _userService.GetUserByUsername(request.Username);
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
+        
+        await SetRefreshToken(response, user);
+        return GenerateAccessToken(user);
+    }
+    
+    public async Task<string> RegisterAsync(UserRegisterDto request, HttpResponse response)
     {
         // Input validation
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)
-            || string.IsNullOrWhiteSpace(request.Email))
+                                                        || string.IsNullOrWhiteSpace(request.Email))
         {
             throw new ArgumentException("Uporabniške ime, e-poštni naslov in geslo so obvezni!");
         }
@@ -84,25 +136,24 @@ public class AuthService : IAuthService
         // Add new user instance to the database
         _context.User.Add(newUser);
         await _context.SaveChangesAsync();
-        return GenerateJwtTokenString(newUser);
+        
+        await SetRefreshToken(response, newUser);
+        return GenerateAccessToken(newUser);
     }
 
-    public async Task<string> LoginAsync(UserLoginDto request)
+    public async Task LogoutAsync(HttpResponse response, User user)
     {
-        // Input validation
-        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)) throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
-
-        // Input formatting - nothing cannot end with a trailing space
-        request.Username = request.Username.Trim().ToLower();
-        request.Password = request.Password.Trim();
-
-        // Check if user exists
-        if (!await _userService.UserExists(request.Username)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
-
-        User user = await _userService.GetUserByUsername(request.Username);
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
+        user.RefreshToken = null;
+        user.RefreshTokenExpiration = null;
+        await _context.SaveChangesAsync();
         
-        return GenerateJwtTokenString(user);
+        response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/"
+        });
     }
 
     public async Task<bool> VerifyLogin(string username, string password)
@@ -163,36 +214,18 @@ public class AuthService : IAuthService
         user.PasswordResetToken = null;
         user.PasswordResetTokenExpiration = null;
         await _context.SaveChangesAsync();
-        return GenerateJwtTokenString(user);
+        return GenerateAccessToken(user);
     }
 
     // Helper methods
-    private string GenerateJwtTokenString(User user)
+    private string GenerateRefreshToken()
     {
-        _context.Entry(user).Reference(u => u.Role).Load();
-
-        List<Claim> claims = new List<Claim>
-        {
-            new Claim("username", user.Username),
-            new Claim("email", user.Email),
-            new Claim("role", user.Role.Name.ToLower()),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-        };
-
-        RsaSecurityKey key = new RsaSecurityKey(_privateRsa);
-        SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
-
-        JwtSecurityToken token = new JwtSecurityToken(
-            issuer: _configuration.GetSection("AppSettings:Issuer").Value,
-            audience: _configuration.GetSection("AppSettings:Audience").Value,
-            claims: claims,
-            expires: DateTime.UtcNow.AddDays(30),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        using var rng = RandomNumberGenerator.Create();
+        byte[] tokenData = new byte[32];
+        rng.GetBytes(tokenData);
+        return Convert.ToBase64String(tokenData);
     }
-
+    
     private string GenerateSalt()
     {
         return BCrypt.Net.BCrypt.GenerateSalt();

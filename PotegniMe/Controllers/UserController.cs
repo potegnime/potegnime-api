@@ -63,8 +63,9 @@ public class UserController(IUserService userService, IAuthService authService) 
         }
             
         // return new JWT (with new username/email)
-        string token = await authService.GenerateJwtToken(newUsername ?? username);
-        return Ok(new JwtTokenResponseDto { Token = token });
+        var user = await GetCurrentUserAsync();
+        string accessToken = authService.GenerateAccessToken(user);
+        return Ok(new JwtTokenResponseDto { AccessToken = accessToken });
     }
     
     [HttpPost("setPfp"), Authorize]
@@ -75,13 +76,14 @@ public class UserController(IUserService userService, IAuthService authService) 
         if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
         // Check if profile picture is attached - determine between update and remove profile picture
+        var user = await GetCurrentUserAsync();
         if (updatePfpDto.ProfilePicFile == null)
         {
             // Remove profile picture
             await userService.RemovePfp(username);
             return Ok(new JwtTokenResponseDto
             {
-                Token = await authService.GenerateJwtToken(username)
+                AccessToken = authService.GenerateAccessToken(user)
             });
         }
         // Update profile picture
@@ -89,7 +91,7 @@ public class UserController(IUserService userService, IAuthService authService) 
         
         return Ok(new JwtTokenResponseDto
         {
-            Token = await authService.GenerateJwtToken(username)
+            AccessToken = authService.GenerateAccessToken(user)
         });
     }
 
@@ -127,7 +129,7 @@ public class UserController(IUserService userService, IAuthService authService) 
     public async Task<ActionResult> SubmitUploaderRequest([FromBody] UploaderRequestDto uploaderRequestDto)
     {
         var username = User.FindFirstValue("username");
-        if (username == null) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
 
         if (uploaderRequestDto.Experience.Length > 1000 || uploaderRequestDto.Content.Length > 1000 ||
             uploaderRequestDto.Proof?.Length > 3000 || uploaderRequestDto.OtherTrackers?.Length > 1000)
@@ -138,5 +140,14 @@ public class UserController(IUserService userService, IAuthService authService) 
 
         // TODO: Save uploader request in DB
         return Ok();
+    }
+    
+    // Helpers
+    private async Task<User> GetCurrentUserAsync()
+    {
+        var username = User.FindFirstValue("username");
+        if (string.IsNullOrWhiteSpace(username)) throw new UnauthorizedAccessException();
+
+        return await userService.GetUserByUsername(username);
     }
 }

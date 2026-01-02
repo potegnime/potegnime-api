@@ -45,7 +45,7 @@ public class AdminController(IAuthService authService, IUserService userService,
     [HttpPost("uploaderRequest"), Authorize]
     public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
     {
-        string token = await authService.RegisterAsync(userRegisterDto);
-        return StatusCode(201, new JwtTokenResponseDto { Token = token });
+        string token = await authService.RegisterAsync(userRegisterDto, Response);
+        return StatusCode(201, new JwtTokenResponseDto { AccessToken = token });
     }
 }
