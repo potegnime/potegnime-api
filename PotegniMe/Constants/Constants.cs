@@ -2,10 +2,18 @@ namespace PotegniMe.Constants;
 
 public static class Constants
 {
+    // JWT
+    public static readonly int AccessTokenExpMin = 15;
+    public static readonly int RefreshTokenExpDays = 60;
+    
     // Error codes
     public static readonly string DotEnvErrorCode = "POTEGNIME_DOTENV_ERROR";
     public static readonly string AppSettingsErrorCode = "POTEGNIME_APPSETTINGS_ERROR";
     public static readonly string InternalErrorCode = "POTEGNIME_INTERNAL_ERROR";
+    
+    // potegnime languages - ISO 639-1 (https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes Set 1)
+    public static readonly string SlovenianLang = "sl";
+    public static readonly string EnglishLanguage = "en";
     
     // TMDB related
     public static readonly int TmdbCacheHours = 1; // 1h

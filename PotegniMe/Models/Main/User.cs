@@ -36,6 +36,8 @@ public class User
     public string? PasswordResetToken { get; set; }
 
     public DateTime? PasswordResetTokenExpiration { get; set; }
+    
+    public required string Language { get; set; }
 
     public int RoleId { get; set; }
 

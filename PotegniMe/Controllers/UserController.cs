@@ -11,7 +11,7 @@ namespace PotegniMe.Controllers;
 [ApiController]
 public class UserController(IUserService userService, IAuthService authService) : ControllerBase
 {
-    [HttpGet("username"), Authorize]
+    [HttpGet, Authorize]
     public async Task<ActionResult> GetUser(string username)
     {
         var user = await userService.GetUserByUsername(username);
