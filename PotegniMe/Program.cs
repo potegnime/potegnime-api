@@ -7,7 +7,7 @@ global using PotegniMe.DTOs.Auth;
 global using PotegniMe.Enums;
 global using PotegniMe.DTOs.Error;
 global using Microsoft.AspNetCore.Mvc;
-
+using System.Security.Cryptography;
 using PotegniMe.Services.AuthService;
 using System.Text;
 using PotegniMe.Services.UserService;
@@ -19,6 +19,7 @@ using PotegniMe.Services.AdminService;
 using DotNetEnv;
 using PotegniMe.Constants;
 using PotegniMe.Core;
+using PotegniMe.Helpers;
 using PotegniMe.Services.EncryptionService;
 using PotegniMe.Services.ExploreService;
 
@@ -26,8 +27,8 @@ using PotegniMe.Services.ExploreService;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
-var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_DB_CONN");;
-var apiKey = Environment.GetEnvironmentVariable("POTEGNIME_APP_KEY") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_APP_KEY");
+var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_DB_CONN");
+var audience = builder.Configuration["AppSettings:Audience"] ?? throw new Exception($"{Constants.AppSettingsErrorCode} AppSettings:Audience");
 var issuer = builder.Configuration["AppSettings:Issuer"] ?? throw new Exception($"{Constants.AppSettingsErrorCode} AppSettings:Issuer");
 
 builder.Services.AddControllers();
@@ -67,6 +68,10 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Authentication
+string projectRoot = Path.Combine(AppContext.BaseDirectory, "../../../..");
+string publicKeyPath = Path.Combine(projectRoot, "keys", "public.pem");
+RSA publicRsa = AuthHelper.LoadPublicKey(publicKeyPath);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -75,10 +80,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
+            ClockSkew =  TimeSpan.Zero,
             ValidateIssuerSigningKey = true,
             ValidIssuer = issuer,
-            ValidAudiences = new List<string> { "https://potegni.me" },
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiKey)),
+            ValidAudience = audience,
+            IssuerSigningKey = new RsaSecurityKey(publicRsa)
         };
     });
 
