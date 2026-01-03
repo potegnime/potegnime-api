@@ -15,12 +15,11 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, Constants.Constants.InternalErrorCode);
-            await HandleExceptionAsync(context, ex);
+            await HandleExceptionAsync(context, ex, logger);
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger<ExceptionMiddleware> logger)
     {
         HttpStatusCode status;
         ErrorResponseDto response;
@@ -48,6 +47,7 @@ public class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddlewa
                 response = new ErrorResponseDto { ErrorCode = 1, Message = e.Message };
                 break;
             default:
+                logger.LogError(exception, Constants.Constants.InternalErrorCode);
                 status = HttpStatusCode.InternalServerError;
                 response = new ErrorResponseDto { ErrorCode = 2, Message = "Internal server error :(" };
                 break;
