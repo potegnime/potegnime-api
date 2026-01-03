@@ -75,7 +75,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)) throw new ArgumentException("Uporabniško ime in geslo sta obvezna!");
 
         // Input formatting - nothing cannot end with a trailing space
-        request.Username = request.Username.Trim().ToLower();
+        request.Username = request.Username.Trim();
         request.Password = request.Password.Trim();
 
         // Check if user exists
