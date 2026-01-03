@@ -28,7 +28,7 @@ dotnet build
 dotnet run
 ```
 
-You will need `public.pem` and `private.pem` in the same location where the app runs. This is usually `potegnime-api/PotegniMe/bin/Debug/net8.0`. Create folder `keys` with both mentioned keys above in it. You can generate key pair by running:
+You will need `.env`, `public.pem` and `private.pem` in the same location where the app runs. This is usually `potegnime-api/PotegniMe/bin/Debug/net8.0`. Create `.env` file and folder `keys` with the keys mentioned above in it. You can generate key pair by running:
 ```
 openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
 openssl rsa -pubout -in private.pem -out public.pem
