@@ -99,7 +99,7 @@ public class AuthService : IAuthService
 
         // Input formatting - nothing can end with a trailing space
         request.Email = request.Email.Trim().ToLower();
-        request.Username = request.Username.Trim().ToLower();
+        request.Username = request.Username.Trim();
         request.Password = request.Password.Trim();
 
         // Check if user exists

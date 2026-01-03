@@ -31,8 +31,8 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
     public async Task UpdateUsername(string oldUsername, string newUsername)
     {
         // formatting - nothing can end with a trailing space
-        oldUsername = oldUsername.Trim().ToLower();
-        newUsername = newUsername.Trim().ToLower();
+        oldUsername = oldUsername.Trim();
+        newUsername = newUsername.Trim();
 
         // Check if username is already taken
         if (await context.User.AnyAsync(u => u.Username == newUsername))
