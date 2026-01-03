@@ -27,7 +27,11 @@ public class AuthController(IAuthService authService, IUserService userService) 
     [HttpPost("refresh"), AllowAnonymous]
     public async Task<ActionResult<JwtTokenResponseDto>> RefreshToken()
     {
-        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken)) return Unauthorized();
+        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+        {
+            // Cookie expired on client or not present
+            return Unauthorized();
+        }
         User user = await userService.GetUserByRefreshToken(refreshToken);
         if (user.RefreshTokenExpiration < DateTime.UtcNow) return Unauthorized();
         
