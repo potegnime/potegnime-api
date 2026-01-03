@@ -31,8 +31,8 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
     public async Task UpdateUsername(string oldUsername, string newUsername)
     {
         // formatting - nothing can end with a trailing space
-        oldUsername = oldUsername.Trim().ToLower();
-        newUsername = newUsername.Trim().ToLower();
+        oldUsername = oldUsername.Trim();
+        newUsername = newUsername.Trim();
 
         // Check if username is already taken
         if (await context.User.AnyAsync(u => u.Username == newUsername))
@@ -175,13 +175,24 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
         user.PasswordSalt = salt;
         await context.SaveChangesAsync();
     }
+    
+    public async Task DeleteUser(string username)
+    {
+        var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
+        context.User.Remove(user);
+        await context.SaveChangesAsync();
+    }
 
+    public async Task<User> GetUserById(int userId)
+    {
+        User user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? throw new NotFoundException();
+        return user;
+    }
+    
     public async Task<User> GetUserByUsername(string username)
     {
-        return await context.User
-                    .Include(u => u.Role)
-                    .FirstOrDefaultAsync(u => u.Username == username)
-                ?? throw new NotFoundException();
+        return await context.User.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == username)
+               ?? throw new NotFoundException();
     }
 
     public async Task<User> GetUserByEmail(string email)
@@ -189,13 +200,17 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
         User user = await context.User.FirstOrDefaultAsync(u => u.Email == email) ?? throw new NotFoundException();
         return user;
     }
+    
+    public async Task<User> GetUserByRefreshToken(string refreshToken)
+    {
+        User user = await context.User.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken) ?? throw new NotFoundException();
+        return user;
+    }
 
     public async Task<Role> GetUserRole(string username)
     {
-        var user = await context.User
-                        .Include(u => u.Role)
-                        .FirstOrDefaultAsync(u => u.Username == username)
-                    ?? throw new NotFoundException();
+        var user = await context.User.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == username) 
+                   ?? throw new NotFoundException();
 
         return user.Role;
     }
@@ -210,13 +225,6 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
     {
         Role role = await GetUserRole(username);
         return role.Name.ToLower() == "uploader";
-    }
-
-    public async Task DeleteUser(string username)
-    {
-        var user = await context.User.FirstOrDefaultAsync(u => u.Username == username) ?? throw new NotFoundException();
-        context.User.Remove(user);
-        await context.SaveChangesAsync();
     }
 
     public RoleRequestStatus? GetRoleRequestStatus(int userId)

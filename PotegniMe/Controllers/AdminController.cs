@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.DTOs.User;
 using PotegniMe.Services.AdminService;
 using PotegniMe.Services.AuthService;
@@ -15,9 +16,8 @@ public class AdminController(IAuthService authService, IUserService userService,
     public async Task<ActionResult> UpdateRole([FromBody] UpdateRoleDto updateRoleDto)
     {
         // Check if user is admin
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-        if (!await userService.IsAdmin(username)) return Unauthorized();
+        User user = await GetCurrentUserAsync();
+        if (!await userService.IsAdmin(user.Username)) return Unauthorized();
         
         updateRoleDto.RoleName = updateRoleDto.RoleName.ToLower();
         if (updateRoleDto.RoleName != "admin" && updateRoleDto.RoleName != "user" && updateRoleDto.RoleName != "uploader")
@@ -33,9 +33,8 @@ public class AdminController(IAuthService authService, IUserService userService,
     public async Task<ActionResult> AdminDelete(string username)
     {
         // Check if user is admin
-        var userUsername = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(userUsername)) return Unauthorized();
-        if (!await userService.IsAdmin(userUsername)) return Unauthorized();
+        User user = await GetCurrentUserAsync();
+        if (!await userService.IsAdmin(user.Username)) return Unauthorized();
         
         await userService.GetUserByUsername(username); // throws NotFoundException if user doesn't exist
         await userService.DeleteUser(username);
@@ -45,7 +44,16 @@ public class AdminController(IAuthService authService, IUserService userService,
     [HttpPost("uploaderRequest"), Authorize]
     public async Task<ActionResult<string>> UploaderRequests([FromBody] UserRegisterDto userRegisterDto)
     {
-        string token = await authService.RegisterAsync(userRegisterDto);
-        return StatusCode(201, new JwtTokenResponseDto { Token = token });
+        string token = await authService.RegisterAsync(userRegisterDto, Response);
+        return StatusCode(201, new JwtTokenResponseDto { AccessToken = token });
+    }
+    
+    // Helpers
+    private async Task<User> GetCurrentUserAsync()
+    {
+        var uid = User.FindFirstValue("uid");
+        if (uid == null) throw new UnauthorizedException("Unauthorized");
+
+        return await userService.GetUserById(Convert.ToInt32(uid));
     }
 }

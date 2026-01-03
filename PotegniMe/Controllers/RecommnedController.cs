@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.Services.RecommendService;
 using PotegniMe.Services.UserService;
 
@@ -15,9 +16,8 @@ public class RecommendController(IRecommendService recommendService, IUserServic
     public async Task<ActionResult<Recommendation>> SetRecommendation([FromBody] Recommendation recommendation)
     {
         // Check if user is admin
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-        if (!await userService.IsAdmin(username)) return Unauthorized();
+        var user = await  GetCurrentUserAsync();
+        if (!await userService.IsAdmin(user.Username)) return Unauthorized();
         
         Recommendation result = await recommendService.SetRecommendation(recommendation);
         return Ok(result);
@@ -33,11 +33,19 @@ public class RecommendController(IRecommendService recommendService, IUserServic
     [HttpDelete, Authorize]
     public async Task<ActionResult<Recommendation>> DeleteRecommendation(DateOnly date, string type)
     {
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-        if (!await userService.IsAdmin(username)) return Unauthorized();
+        var user = await GetCurrentUserAsync();
+        if (!await userService.IsAdmin(user.Username)) return Unauthorized();
         
         await recommendService.DeleteRecommendation(date, type);
         return Ok();
+    }
+    
+    // Helpers
+    private async Task<User> GetCurrentUserAsync()
+    {
+        var uid = User.FindFirstValue("uid");
+        if (uid == null) throw new UnauthorizedException("Unauthorized");
+
+        return await userService.GetUserById(Convert.ToInt32(uid));
     }
 }

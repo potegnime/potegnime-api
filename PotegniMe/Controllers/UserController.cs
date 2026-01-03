@@ -11,7 +11,7 @@ namespace PotegniMe.Controllers;
 [ApiController]
 public class UserController(IUserService userService, IAuthService authService) : ControllerBase
 {
-    [HttpGet("username"), Authorize]
+    [HttpGet, Authorize]
     public async Task<ActionResult> GetUser(string username)
     {
         var user = await userService.GetUserByUsername(username);
@@ -29,10 +29,8 @@ public class UserController(IUserService userService, IAuthService authService) 
     public async Task<ActionResult<string>> UpdateUser([FromBody] UpdateUserDto updateUserDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
-        var username = User.FindFirstValue("username");
-        var email = User.FindFirstValue("email");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+
+        User user = await GetCurrentUserAsync();
         
         // check if there is data to update
         if (string.IsNullOrWhiteSpace(updateUserDto.Username) && string.IsNullOrWhiteSpace(updateUserDto.Email))
@@ -43,100 +41,104 @@ public class UserController(IUserService userService, IAuthService authService) 
         var newUsername = updateUserDto.Username?.Trim();
         var newEmail = updateUserDto.Email?.Trim();
         
-        if (!string.IsNullOrEmpty(newUsername) && string.Equals(username, newUsername, StringComparison.Ordinal))
+        if (!string.IsNullOrEmpty(newUsername) && string.Equals(user.Username, newUsername, StringComparison.Ordinal))
         {
             throw new ConflictException("Novo uporabniško ime ne sme biti enako prejšnjemu!");
         }
 
         if (!string.IsNullOrEmpty(newEmail) &&
-            string.Equals(email, newEmail, StringComparison.OrdinalIgnoreCase))
+            string.Equals(user.Email, newEmail, StringComparison.OrdinalIgnoreCase))
         {
             throw new ConflictException("Nov e-poštni naslov ne sme biti enak prejšnjemu!");
         }
         
-        if (!string.IsNullOrEmpty(newEmail)) await userService.UpdateEmail(username, newEmail);
+        if (!string.IsNullOrEmpty(newEmail)) await userService.UpdateEmail(user.Username, newEmail);
         if (!string.IsNullOrEmpty(newUsername))
         {
-            await userService.UpdateUsername(username, newUsername);
+            await userService.UpdateUsername(user.Username, newUsername);
             // update pfp as well - pfp name is username (https://api.potegni.me/pfp/username)
-            await userService.RenamePfp(username, newUsername);
+            await userService.RenamePfp(user.Username, newUsername);
         }
             
         // return new JWT (with new username/email)
-        string token = await authService.GenerateJwtToken(newUsername ?? username);
-        return Ok(new JwtTokenResponseDto { Token = token });
+        string accessToken = authService.GenerateAccessToken(user);
+        return Ok(new JwtTokenResponseDto { AccessToken = accessToken });
     }
     
     [HttpPost("setPfp"), Authorize]
     public async Task<ActionResult<string>> UpdatePfp([FromForm] UpdatePfpDto updatePfpDto)
     {
         // Check if user exists
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
+        var user = await GetCurrentUserAsync();
 
         // Check if profile picture is attached - determine between update and remove profile picture
         if (updatePfpDto.ProfilePicFile == null)
         {
             // Remove profile picture
-            await userService.RemovePfp(username);
+            await userService.RemovePfp(user.Username);
             return Ok(new JwtTokenResponseDto
             {
-                Token = await authService.GenerateJwtToken(username)
+                AccessToken = authService.GenerateAccessToken(user)
             });
         }
         // Update profile picture
-        await userService.UpdatePfp(username, updatePfpDto.ProfilePicFile);
+        await userService.UpdatePfp(user.Username, updatePfpDto.ProfilePicFile);
         
         return Ok(new JwtTokenResponseDto
         {
-            Token = await authService.GenerateJwtToken(username)
+            AccessToken = authService.GenerateAccessToken(user)
         });
     }
 
     [HttpPost("updatePassword"), Authorize]
     public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordDto updatePasswordDto)
     {
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username))
-            return Unauthorized();
+        User user = await GetCurrentUserAsync();
 
         if (updatePasswordDto.NewPassword == updatePasswordDto.OldPassword)
             throw new ArgumentException("Novo geslo ne sme biti enako prejšnjemu.");
 
-        if (!await authService.VerifyLogin(username, updatePasswordDto.OldPassword))
+        if (!await authService.VerifyLogin(user.Username, updatePasswordDto.OldPassword))
             throw new UnauthorizedAccessException("Geslo ni pravilno!");
 
-        await userService.UpdatePassword(username, updatePasswordDto.NewPassword);
+        await userService.UpdatePassword(user.Username, updatePasswordDto.NewPassword);
         return Ok();
     }
 
     [HttpDelete("deleteUser"), Authorize]
     public async Task<ActionResult> DeleteUser([FromBody] DeleteUserDto deleteUserDto)
     {
-        var username = User.FindFirstValue("username");
-        if (username == null) return Unauthorized();
+        User user = await GetCurrentUserAsync();
 
-        if (!await authService.VerifyLogin(username, deleteUserDto.Password))
+        if (!await authService.VerifyLogin(user.Username, deleteUserDto.Password))
             throw new UnauthorizedAccessException("Geslo ni pravilno!");
 
-        await userService.DeleteUser(username);
+        await userService.DeleteUser(user.Username);
         return Ok();
     }
 
     [HttpPost("submitUploaderRequest"), Authorize]
     public async Task<ActionResult> SubmitUploaderRequest([FromBody] UploaderRequestDto uploaderRequestDto)
     {
-        var username = User.FindFirstValue("username");
-        if (username == null) return Unauthorized();
+        User user =  await GetCurrentUserAsync();
 
         if (uploaderRequestDto.Experience.Length > 1000 || uploaderRequestDto.Content.Length > 1000 ||
             uploaderRequestDto.Proof?.Length > 3000 || uploaderRequestDto.OtherTrackers?.Length > 1000)
             throw new ArgumentException("Maksimalna dolžina presežena!");
 
-        if (await userService.IsUploader(username) || await userService.IsAdmin(username))
+        if (await userService.IsUploader(user.Username) || await userService.IsAdmin(user.Username))
             throw new InvalidOperationException("Uporabnik je že uploader ali admin!");
 
         // TODO: Save uploader request in DB
         return Ok();
+    }
+    
+    // Helpers
+    private async Task<User> GetCurrentUserAsync()
+    {
+        var uid = User.FindFirstValue("uid");
+        if (uid == null) throw new UnauthorizedException("Unauthorized");
+
+        return await userService.GetUserById(Convert.ToInt32(uid));
     }
 }

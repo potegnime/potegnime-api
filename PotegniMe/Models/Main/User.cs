@@ -18,6 +18,10 @@ public class User
     public required string PasswordHash { get; set; }
 
     public required string PasswordSalt { get; set; }
+    
+    public string? RefreshToken { get; set; }
+    
+    public DateTime? RefreshTokenExpiration { get; set; }
 
     public string? ProfilePicFilePath { get; set; }
 
@@ -36,6 +40,8 @@ public class User
     public string? PasswordResetToken { get; set; }
 
     public DateTime? PasswordResetTokenExpiration { get; set; }
+    
+    public required string Language { get; set; }
 
     public int RoleId { get; set; }
 
