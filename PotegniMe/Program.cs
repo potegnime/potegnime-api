@@ -68,8 +68,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Authentication
-string projectRoot = Path.Combine(AppContext.BaseDirectory, "../../../..");
-string publicKeyPath = Path.Combine(projectRoot, "keys", "public.pem");
+string publicKeyPath = Path.Combine(AppContext.BaseDirectory, "keys", "public.pem");
 RSA publicRsa = AuthHelper.LoadPublicKey(publicKeyPath);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

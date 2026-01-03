@@ -28,6 +28,12 @@ dotnet build
 dotnet run
 ```
 
+You will need `public.pem` and `private.pem` in the same location where the app runs. This is usually `potegnime-api/PotegniMe/bin/Debug/net8.0`. Create folder `keys` with both mentioned keys above in it. You can generate key pair by running:
+```
+openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -pubout -in private.pem -out public.pem
+```
+
 API runs on http://localhost:5194. Swagger is available at http://localhost:5194/swagger/index.html
 
 ## Development guidelines
@@ -42,6 +48,17 @@ For deployment info consult internal [potegnime-wiki](https://github.com/potegni
 
 If you want to try out the production build locally run:
 ```
-dotnet publish -c Release -o potegnime-api/publish
-dotnet potegnime-api/publish/Potegnime.dll --urls "http://127.0.0.1:5194"
+# build the app
+dotnet publish -c Release -o PotegniMe/publish
+
+# create .env file in the same location where the Potegni.me dll lives
+nano .env # copy contents from your .env
+
+# create keys folder with public.pem and private.pem
+mkdir keys
+cd keys
+nano public.pem
+nano private.pem
+
+dotnet PotegniMe/publish/PotegniMe.dll --urls "http://127.0.0.1:5194"
 ```

@@ -26,8 +26,7 @@ public class AuthService : IAuthService
         _userService = userService;
         _emailService = emailService;
         _encryptionService = encryptionService;
-        string projectRoot = Path.Combine(AppContext.BaseDirectory, "../../../..");
-        string privateKeyPath = Path.Combine(projectRoot, "keys", "private.pem");
+        string privateKeyPath = Path.Combine(AppContext.BaseDirectory, "keys", "private.pem");
         _privateRsa = AuthHelper.LoadPrivateKey(privateKeyPath);
     }
     
