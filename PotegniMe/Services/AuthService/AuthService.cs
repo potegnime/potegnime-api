@@ -1,7 +1,5 @@
-﻿using System.Globalization;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using PotegniMe.Core.Exceptions;
@@ -35,13 +33,9 @@ public class AuthService : IAuthService
     
     public string GenerateAccessToken(User user)
     {
-        _context.Entry(user).Reference(u => u.Role).Load();
-
         List<Claim> claims = new List<Claim>
         {
-            new Claim("username", user.Username),
-            new Claim("email", user.Email),
-            new Claim("role", user.Role.Name.ToLower()),
+            new Claim("uid", user.UserId.ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
         };
 
@@ -52,7 +46,7 @@ public class AuthService : IAuthService
             issuer: _configuration.GetSection("AppSettings:Issuer").Value,
             audience: _configuration.GetSection("AppSettings:Audience").Value,
             claims: claims,
-            expires: DateTime.UtcNow.AddSeconds(15),
+            expires: DateTime.UtcNow.AddMinutes(Constants.Constants.AccessTokenExpMin),
             signingCredentials: creds
         );
 
@@ -98,8 +92,7 @@ public class AuthService : IAuthService
     public async Task<string> RegisterAsync(UserRegisterDto request, HttpResponse response)
     {
         // Input validation
-        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)
-                                                        || string.IsNullOrWhiteSpace(request.Email))
+        if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.Email))
         {
             throw new ArgumentException("Uporabniške ime, e-poštni naslov in geslo so obvezni!");
         }
