@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using PotegniMe.Core.Exceptions;
 using PotegniMe.Services.AuthService;
 using PotegniMe.Services.UserService;
 
@@ -41,14 +42,11 @@ public class AuthController(IAuthService authService, IUserService userService) 
         await authService.ForgotPassword(forgotPasswordDto);
         return Ok();
     }
-    
+
     [HttpPost("logout"), Authorize]
     public async Task<ActionResult> Logout()
     {
-        var username = User.FindFirstValue("username");
-        if (string.IsNullOrWhiteSpace(username)) return Unauthorized();
-
-        User user = await userService.GetUserByUsername(username);
+        User user = await GetCurrentUserAsync();
         await authService.LogoutAsync(Response, user);
         return Ok();
     }
@@ -58,5 +56,14 @@ public class AuthController(IAuthService authService, IUserService userService) 
     {
         string accessToken = await authService.ResetPassword(resetPasswordDto);
         return StatusCode(201, new JwtTokenResponseDto { AccessToken = accessToken });
+    }
+    
+    // Helpers
+    private async Task<User> GetCurrentUserAsync()
+    {
+        var uid = User.FindFirstValue("uid");
+        if (uid == null) throw new UnauthorizedException("Unauthorized");
+
+        return await userService.GetUserById(Convert.ToInt32(uid));
     }
 }
