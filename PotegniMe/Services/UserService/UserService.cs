@@ -183,6 +183,12 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
                     .FirstOrDefaultAsync(u => u.Username == username)
                 ?? throw new NotFoundException();
     }
+    
+    public async Task<User> GetUserById(int userId)
+    {
+        User user = await context.User.FirstOrDefaultAsync(u => u.UserId == userId) ?? throw new NotFoundException();
+        return user;
+    }
 
     public async Task<User> GetUserByEmail(string email)
     {

@@ -9,7 +9,6 @@ public interface IUserService
     // Returns true if user exists, false if not
     Task<bool> UserExists(string username, string email);
     Task<bool> UserExists(string username);
-    Task<bool> UserExists(int userId);
 
     // User based methods
     // Update user username
@@ -33,6 +32,9 @@ public interface IUserService
     // Get user by username
     Task<User> GetUserByUsername(string username);
 
+    // Get user by user ID
+    Task<User> GetUserById(int userId);
+    
     // Get user by email
     Task<User> GetUserByEmail(string email);
     
