@@ -1,54 +1,66 @@
-﻿using SendGrid.Helpers.Mail;
-using SendGrid;
-using System.Net;
+﻿using System.Net;
+using System.Net.Mail;
+using System.Text.RegularExpressions;
 
 namespace PotegniMe.Services.EmailService;
 
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
-    private readonly string _sendGridApiKey;
-    private readonly string _sendGridPasswordResetTemplateId;
-    private readonly string _sendGridSenderEmail;
-    private readonly string _sendGridSenderName;
+    private readonly string _smtpServer;
+    private readonly ushort _smtpPort;
+    private readonly string _smtpUsername;
+    private readonly string _smtpPassword;
 
     public EmailService(IConfiguration configuration)
-    {
+    { 
         _configuration = configuration;
-        _sendGridApiKey = Environment.GetEnvironmentVariable("POTEGNIME_SENDGRID_KEY") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_SENDGRID_KEY");
-        _sendGridPasswordResetTemplateId = _configuration["SendGrid:PasswordResetTemplateId"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} PasswordResetTemplateId");
-        _sendGridSenderEmail = _configuration["SendGrid:SenderEmail"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SenderEmail");
-        _sendGridSenderName = _configuration["SendGrid:SenderName"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SenderName");
+        _smtpServer = Environment.GetEnvironmentVariable("POTEGNIME_SMTP_SERVER") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_SMTP_SERVER");;
+        _smtpPassword = Environment.GetEnvironmentVariable("POTEGNIME_MAIL_PASSWORD") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_MAIL_PASSWORD");;
+        _smtpUsername = _configuration["Email:Username"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SmtpUsername");
+        var res = ushort.TryParse(_configuration["Email:SmtpPort"], out _smtpPort);
 
-        if (
-            string.IsNullOrEmpty(_sendGridApiKey) ||
-            string.IsNullOrEmpty(_sendGridPasswordResetTemplateId) ||
-            string.IsNullOrEmpty(_sendGridSenderEmail) ||
-            string.IsNullOrEmpty(_sendGridSenderName)
-            )
+        if (string.IsNullOrEmpty(_smtpServer) || string.IsNullOrEmpty(_smtpUsername) || string.IsNullOrEmpty(_smtpPassword) || res == false)
         {
-            throw new ArgumentException("SendGrid settings not configured");
+            throw new ArgumentException("Email settings not configured");
         }
     }
 
     public async Task SendEmailAsync(string userEmail, Dictionary<string, string> templateData)
     {
-        SendGridClient client = new SendGridClient(_sendGridApiKey);
-        EmailAddress from = new EmailAddress(_sendGridSenderEmail, _sendGridSenderName);
-        EmailAddress to = new EmailAddress(userEmail);
-        var msg = MailHelper.CreateSingleTemplateEmail(from, to, _sendGridPasswordResetTemplateId, templateData);
-
-        var response = await client.SendEmailAsync(msg);
-        if (!response.IsSuccessStatusCode)
+        var smtpClient = new SmtpClient()
         {
-            // Check if rate limit exceeded (403 Forbidden)
-            if (response.StatusCode == HttpStatusCode.Forbidden)
-            {
-                // SendGrid limit exceeded...
-            }
+            Host = _smtpServer,
+            Port = _smtpPort,
+            Credentials = new NetworkCredential(_smtpUsername, _smtpPassword),
+            EnableSsl = true,
+            Timeout = 5000
+        };
 
-            // General error
-            throw new Exception($"Failed to send email: {response.StatusCode}");
-        }
+        string templatePath = Path.Combine(AppContext.BaseDirectory, "email-templates", "reset-password.html");
+        if (!File.Exists(templatePath)) throw new FileNotFoundException("email-templates/reset-password.html file not found", templatePath);
+
+        string msg = await File.ReadAllTextAsync(templatePath);
+        msg = FormatText(msg, templateData);
+
+        var mail = new MailMessage()
+        {
+            From = new MailAddress(_smtpUsername, "potegni.me"),
+            Subject = "Ponastavi geslo - potegni.me",
+            Body = msg,
+            IsBodyHtml = true
+        };
+
+        mail.To.Add(userEmail);
+        await smtpClient.SendMailAsync(mail);
+    }
+
+    private string FormatText(string text, Dictionary<string, string> templateData)
+    {
+        return Regex.Replace(text, @"\{\{\s*(.*?)\s*\}\}", m =>
+        {
+            var key = m.Groups[1].Value;
+            return templateData.TryGetValue(key, out var value) ? value : m.Value;
+        });
     }
 }
