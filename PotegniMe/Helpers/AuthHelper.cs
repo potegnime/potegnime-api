@@ -20,6 +20,12 @@ public static class AuthHelper
         return new string(chars);
     }
 
+    public static string GeneratePasswordResetToken()
+    {
+        // same thing just a random string
+        return  GeneratePasskey();
+    }
+
     public static RSA LoadPrivateKey(string path)
     {
         if (!File.Exists(path)) throw new FileNotFoundException("Private key file not found", path);

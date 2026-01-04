@@ -160,8 +160,7 @@ public class AuthService : IAuthService
         {
             string userEmail = forgotPasswordDto.Email.Trim().ToLower();
             User user = await _userService.GetUserByEmail(userEmail);
-            // Generate reset token
-            string token = GeneratePasswordResetToken();
+            string token = AuthHelper.GeneratePasswordResetToken();
 
             // Save token to the database
             user.PasswordResetToken = token;
@@ -226,15 +225,5 @@ public class AuthService : IAuthService
     private string HashPassword(string password, string salt)
     {
         return BCrypt.Net.BCrypt.HashPassword(password, salt);
-    }
-
-    private string GeneratePasswordResetToken()
-    {
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            byte[] tokenData = new byte[32];
-            rng.GetBytes(tokenData);
-            return Convert.ToBase64String(tokenData);
-        }
     }
 }
