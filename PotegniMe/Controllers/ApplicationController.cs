@@ -32,7 +32,7 @@ public class ApplicationController(DataContext context, IUserService userService
             ip = HttpContext.Connection.RemoteIpAddress?.ToString();
         }
 
-        if (!string.IsNullOrEmpty(ip))
+        if (user.IpAddr != ip && !string.IsNullOrEmpty(ip))
         {
             await userService.UpdateIp(user.Username, ip);
         }
