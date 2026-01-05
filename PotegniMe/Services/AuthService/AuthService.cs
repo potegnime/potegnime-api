@@ -76,7 +76,7 @@ public class AuthService : IAuthService
 
         // Input formatting - nothing cannot end with a trailing space
         request.Username = request.Username.Trim();
-        request.Password = request.Password.Trim();
+        request.Password = request.Password;
 
         // Check if user exists
         if (!await _userService.UserExists(request.Username)) throw new UnauthorizedException("Napačno uporabniško ime ali geslo!");
@@ -96,10 +96,14 @@ public class AuthService : IAuthService
             throw new ArgumentException("Uporabniške ime, e-poštni naslov in geslo so obvezni!");
         }
 
+        if (request.Username.Length < 3)
+        {
+            throw new ArgumentException("Uporabniško ime mora vsebovati vsaj 3 znake!");
+        }
+
         // Input formatting - nothing can end with a trailing space
         request.Email = request.Email.Trim().ToLower();
         request.Username = request.Username.Trim();
-        request.Password = request.Password.Trim();
 
         // Check if user exists
         if (await _userService.UserExists(request.Username, request.Email))

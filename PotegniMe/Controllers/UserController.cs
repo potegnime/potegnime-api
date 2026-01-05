@@ -15,12 +15,13 @@ public class UserController(IUserService userService, IAuthService authService) 
     public async Task<ActionResult> GetUser(string username)
     {
         var user = await userService.GetUserByUsername(username);
+        Role role = await userService.GetUserRole(user.Username);
 
         return Ok(new GetUser
         {
             Username = user.Username,
             Joined = user.JoinedDate.Date.ToShortDateString(),
-            Role = user.Role.Name,
+            Role = role.Name,
             HasPfp = user.ProfilePicFilePath != null
         });
     }

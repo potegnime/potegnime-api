@@ -9,16 +9,16 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
         return await context.User.ToListAsync();
     }
 
-    public async Task<bool> UserExists(string username, string email)
+    public Task<bool> UserExists(string username, string email)
     {
-        var user = await context.User.FirstOrDefaultAsync(u => u.Username == username || u.Email == email);
-        return user != null;
+        return context.User.AnyAsync(u =>
+            EF.Functions.ILike(u.Username, username) ||
+            EF.Functions.ILike(u.Email, email));
     }
-
-    public async Task<bool> UserExists(string username)
+    public Task<bool> UserExists(string username)
     {
-        var user = await context.User.FirstOrDefaultAsync(u => u.Username == username);
-        return user != null;
+        return context.User.AnyAsync(u =>
+            EF.Functions.ILike(u.Username, username));
     }
 
     public async Task<bool> UserExists(int userId)
@@ -191,8 +191,8 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
     
     public async Task<User> GetUserByUsername(string username)
     {
-        return await context.User.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == username)
-               ?? throw new NotFoundException();
+        var user = await context.User.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower()) ?? throw new NotFoundException();
+        return user;
     }
 
     public async Task<User> GetUserByEmail(string email)
@@ -209,7 +209,7 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
 
     public async Task<Role> GetUserRole(string username)
     {
-        var user = await context.User.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == username) 
+        var user = await context.User.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower()) 
                    ?? throw new NotFoundException();
 
         return user.Role;
