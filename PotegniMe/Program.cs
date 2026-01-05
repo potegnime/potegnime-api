@@ -9,7 +9,6 @@ global using PotegniMe.DTOs.Error;
 global using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using PotegniMe.Services.AuthService;
-using System.Text;
 using PotegniMe.Services.UserService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +16,7 @@ using PotegniMe.Services.RecommendService;
 using PotegniMe.Services.EmailService;
 using PotegniMe.Services.AdminService;
 using DotNetEnv;
+using Microsoft.AspNetCore.HttpOverrides;
 using PotegniMe.Constants;
 using PotegniMe.Core;
 using PotegniMe.Helpers;
@@ -158,5 +158,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// IPs
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
 
 app.Run();

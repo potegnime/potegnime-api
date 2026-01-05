@@ -15,8 +15,24 @@ public class ApplicationController(DataContext context, IUserService userService
     public async Task<ActionResult<ApplicationDataDto>> GetApplicationData()
     {
         User user = await  GetCurrentUserAsync();
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        if (ip != null)
+        
+        // update users IP
+        string? ip = null;
+        if (HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwarded))
+        {
+            var forwardedIp = forwarded.FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedIp))
+            {
+                ip = forwardedIp.Split(',').First().Trim();
+            }
+        }
+
+        if (string.IsNullOrEmpty(ip))
+        {
+            ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(ip))
         {
             await userService.UpdateIp(user.Username, ip);
         }
