@@ -15,6 +15,12 @@ public class ApplicationController(DataContext context, IUserService userService
     public async Task<ActionResult<ApplicationDataDto>> GetApplicationData()
     {
         User user = await  GetCurrentUserAsync();
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (ip != null)
+        {
+            await userService.UpdateIp(user.Username, ip);
+        }
+        
         UserDetailsDto userDetails = new UserDetailsDto()
         {
             Username =  user.Username,

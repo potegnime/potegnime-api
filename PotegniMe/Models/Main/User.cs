@@ -42,6 +42,9 @@ public class User
     public DateTime? PasswordResetTokenExpiration { get; set; }
     
     public required string Language { get; set; }
+    
+    [MaxLength(45)]
+    public string? IpAddr { get; set; }
 
     public int RoleId { get; set; }
 

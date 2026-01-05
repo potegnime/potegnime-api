@@ -13,6 +13,7 @@ public interface IUserService
     Task UpdateUsername(string oldUsername, string newUsername);
     Task UpdateEmail(string username, string newEmail);
     Task UpdatePfp(string username, IFormFile profilePicture);
+    Task UpdateIp(string username, string ip);
     Task RenamePfp(string oldUsername, string newUsername);
     Task RemovePfp(string username);
     Task UpdatePassword(string username, string newPassword);

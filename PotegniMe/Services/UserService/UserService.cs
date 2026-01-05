@@ -115,6 +115,13 @@ public class UserService(DataContext context, IConfiguration configuration) : IU
         await context.SaveChangesAsync();
     }
 
+    public async Task UpdateIp(string username, string ip)
+    {
+        var user = await GetUserByUsername(username);
+        user.IpAddr = ip;
+        await context.SaveChangesAsync();
+    }
+
     public async Task RenamePfp(string oldUsername, string newUsername)
     {
         string? storageFilePath = configuration["FileSystem:ProfilePics"];
