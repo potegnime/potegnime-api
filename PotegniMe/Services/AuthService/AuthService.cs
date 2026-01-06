@@ -196,12 +196,12 @@ public class AuthService : IAuthService
 
         // Check token validity
         User user = await _context.User.FirstOrDefaultAsync(u => u.PasswordResetToken == providedToken) ??
-            throw new ArgumentException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
+            throw new UnauthorizedAccessException("Neveljaven token za posodovitev gesla. Prosimo poskusite ponovno");
 
         // Check if token is expired
         if (user.PasswordResetTokenExpiration < DateTime.UtcNow)
         {
-            throw new ArgumentException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
+            throw new UnauthorizedAccessException("Povezava za ponastavitev gesla je potekla. Prosimo poskusite ponovno");
         }
 
         // Reset password and delete token + expiration
