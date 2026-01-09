@@ -17,24 +17,25 @@ Prerequisites:
 - [.NET 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) - runtime and SDK
 - Database client (eg: pgAdmin)
 
-To run the backend, you need to set secrets inside the `.env` file. See `example.env` file regarding file contents. Contact code owners if you need access to app secrets.
+### Running the API
 
-Running the app:
-
-```
-cd PotegniMe/
-dotnet restore
-dotnet build
-dotnet run
-```
-
-You will need `.env`, `public.pem` and `private.pem` in the same location where the app runs. This is usually `potegnime-api/PotegniMe/bin/Debug/net8.0`. Create `.env` file and folder `keys` with the keys mentioned above in it. You can generate key pair by running:
-```
-openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
-openssl rsa -pubout -in private.pem -out public.pem
-```
-
-API runs on http://localhost:5194. Swagger is available at http://localhost:5194/swagger/index.html
+1. Set secrets<br>
+    To run the backend, you need to set secrets inside the `.env` file. See `example.env` file regarding file contents. Contact code owners if you need access to app secrets.
+2. Generate RS256 key pair<br>
+    You will need `.env`, `public.pem` and `private.pem` in the same location where the app runs. This is usually `potegnime-api/PotegniMe/bin/Debug/net8.0`. Create `.env` file and folder `keys` with the keys mentioned above in this folder. You can generate key pair by running:<br><br>
+    ```
+    openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+    openssl rsa -pubout -in private.pem -out public.pem
+    ```
+    If you want to run [potegnime-scraper](https://github.com/potegnime/potegnime-scraper) locally as well, make sure the `public.pem` key is the same for the API and the scraper.
+3. Run the API:<br><br>
+    ```
+    cd PotegniMe/
+    dotnet restore
+    dotnet build
+    dotnet run
+    ```
+    API runs on http://localhost:5194. Swagger is available at http://localhost:5194/swagger/index.html
 
 ## Development guidelines
 
