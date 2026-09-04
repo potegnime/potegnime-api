@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Sends one test message through the configured SMTP transport (Services/EmailService/MailConfig.cs).
+# Reads credentials from the .env next to the app, exactly like the API does.
+#
+# Usage: scripts/test-mail <recipient@example.com>
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <recipient@example.com>" >&2
+    exit 1
+fi
+
+# Run from the project directory so the .env is picked up the same way as `dotnet run`
+cd "$(dirname "${BASH_SOURCE[0]}")/../PotegniMe"
+
+exec dotnet run -- --send-test-mail "$1"

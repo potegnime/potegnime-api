@@ -4,6 +4,9 @@ WORKDIR /app
 
 # Copy the .csproj file and restore dependencies
 COPY PotegniMe/*.csproj ./PotegniMe/
+
+# Mail templates live outside the project dir but are copied to the build output
+COPY email-templates/ ./email-templates/
 RUN dotnet restore ./PotegniMe/PotegniMe.csproj
 
 # Copy the rest of the application code

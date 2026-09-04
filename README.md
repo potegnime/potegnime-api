@@ -8,7 +8,7 @@ To learn more about the project, visit [GitHub organization](https://github.com/
 - **Database:** PostgreSQL with Entity Framework Core
 - **Authentication:** JWT
 - **Password Security:** BCrypt for password hashing (ans salting)
-- **Email Service:** SendGrid for email notifications and password resets
+- **Email Service:** Brevo SMTP relay for email notifications and password resets
 
 ## Development
 
@@ -36,6 +36,27 @@ Prerequisites:
     dotnet run
     ```
     API runs on http://localhost:5194. Swagger is available at http://localhost:5194/swagger/index.html
+
+### Outgoing mail
+
+All outgoing mail goes through `Services/EmailService/MailConfig.cs`, which reads these variables from `.env`:
+
+| Variable | Value |
+| --- | --- |
+| `SMTP_HOST` | `smtp-relay.brevo.com` |
+| `SMTP_PORT` | `587` (STARTTLS) |
+| `SMTP_USER` | Brevo SMTP login |
+| `SMTP_PASS` | Brevo SMTP key |
+| `MAIL_FROM` | `no-reply@potegni.me` |
+| `MAIL_REPLY_TO` | `lebar@lan.si` (the `MAIL_FROM` mailbox is not monitored) |
+
+To verify delivery without going through a real app flow:
+
+```
+scripts/test-mail you@example.com
+```
+
+The Brevo free tier allows 300 emails per rolling 24 hours (counted per recipient) and roughly 5 messages per second.
 
 ## Development guidelines
 

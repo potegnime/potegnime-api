@@ -27,6 +27,12 @@ using PotegniMe.Services.ExploreService;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
+// Standalone mail check, runs before any other app config is required
+if (args.Length > 0 && args[0] == TestMailCommand.Flag)
+{
+    return await TestMailCommand.RunAsync(args.Skip(1).ToArray());
+}
+
 var connectionString = Environment.GetEnvironmentVariable("POTEGNIME_DB_CONN") ?? throw new Exception($"{Constants.DotEnvErrorCode} POTEGNIME_DB_CONN");
 var audience = builder.Configuration["AppSettings:Audience"] ?? throw new Exception($"{Constants.AppSettingsErrorCode} AppSettings:Audience");
 var issuer = builder.Configuration["AppSettings:Issuer"] ?? throw new Exception($"{Constants.AppSettingsErrorCode} AppSettings:Issuer");
@@ -107,6 +113,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IRecommendService, RecommendService>();
 builder.Services.AddScoped<IExploreService, ExploreService>();
+builder.Services.AddSingleton<MailConfig>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // CORS
@@ -121,7 +128,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
                 var uri = new Uri(origin);
                 var host = uri.Host.ToLowerInvariant();
                 if (uri.Scheme == "https" && (host == "potegni.me" || host == "www.potegni.me" || host.EndsWith(".potegni.me"))) return true;
-    
+
                 // allow any subdomain of frontend (e.g. ab027615.potegnime-angular.pages.dev)
                 if (host.EndsWith(".potegnime-angular.pages.dev")) return true;
                 if (builder.Environment.IsDevelopment() && host == "localhost") return true;
@@ -166,3 +173,5 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.Run();
+
+return 0;

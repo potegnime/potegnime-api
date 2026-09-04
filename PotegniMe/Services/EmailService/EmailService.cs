@@ -1,61 +1,53 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
 using System.Text.RegularExpressions;
 
 namespace PotegniMe.Services.EmailService;
 
-public class EmailService : IEmailService
+public class EmailService(MailConfig mailConfig) : IEmailService
 {
-    private readonly IConfiguration _configuration;
-    private readonly string _smtpServer;
-    private readonly ushort _smtpPort;
-    private readonly string _smtpUsername;
-    private readonly string _smtpPassword;
-
-    public EmailService(IConfiguration configuration)
-    { 
-        _configuration = configuration;
-        _smtpServer = Environment.GetEnvironmentVariable("POTEGNIME_SMTP_SERVER") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_SMTP_SERVER");;
-        _smtpPassword = Environment.GetEnvironmentVariable("POTEGNIME_MAIL_PASSWORD") ?? throw new Exception($"{Constants.Constants.DotEnvErrorCode} POTEGNIME_MAIL_PASSWORD");;
-        _smtpUsername = _configuration["Email:Username"] ?? throw new Exception($"{Constants.Constants.AppSettingsErrorCode} SmtpUsername");
-        var res = ushort.TryParse(_configuration["Email:SmtpPort"], out _smtpPort);
-
-        if (string.IsNullOrEmpty(_smtpServer) || string.IsNullOrEmpty(_smtpUsername) || string.IsNullOrEmpty(_smtpPassword) || res == false)
-        {
-            throw new ArgumentException("Email settings not configured");
-        }
-    }
+    private readonly MailConfig _mailConfig = mailConfig;
 
     public async Task SendEmailAsync(string userEmail, Dictionary<string, string> templateData)
     {
-        var smtpClient = new SmtpClient()
-        {
-            Host = _smtpServer,
-            Port = _smtpPort,
-            Credentials = new NetworkCredential(_smtpUsername, _smtpPassword),
-            EnableSsl = true,
-            Timeout = 5000
-        };
-
         string templatePath = Path.Combine(AppContext.BaseDirectory, "email-templates", "reset-password.html");
         if (!File.Exists(templatePath)) throw new FileNotFoundException("email-templates/reset-password.html file not found", templatePath);
 
         string msg = await File.ReadAllTextAsync(templatePath);
         msg = FormatText(msg, templateData);
 
-        var mail = new MailMessage()
+        await SendRawEmailAsync(userEmail, "Ponastavi geslo - potegni.me", msg);
+    }
+
+    public async Task SendRawEmailAsync(string recipient, string subject, string htmlBody)
+    {
+        using var smtpClient = new SmtpClient
         {
-            From = new MailAddress(_smtpUsername, "potegni.me"),
-            Subject = "Ponastavi geslo - potegni.me",
-            Body = msg,
+            Host = _mailConfig.Host,
+            Port = _mailConfig.Port,
+            Credentials = new NetworkCredential(_mailConfig.Username, _mailConfig.Password),
+            EnableSsl = true, // STARTTLS upgrade on the submission port
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            Timeout = 10000
+        };
+
+        using var mail = new MailMessage
+        {
+            From = new MailAddress(_mailConfig.FromAddress, MailConfig.FromDisplayName),
+            Subject = subject,
+            Body = htmlBody,
             IsBodyHtml = true
         };
 
-        mail.To.Add(userEmail);
+        mail.To.Add(recipient);
+
+        // The From mailbox is not monitored, replies go elsewhere
+        mail.ReplyToList.Add(new MailAddress(_mailConfig.ReplyTo));
+
         await smtpClient.SendMailAsync(mail);
     }
 
-    private string FormatText(string text, Dictionary<string, string> templateData)
+    private static string FormatText(string text, Dictionary<string, string> templateData)
     {
         return Regex.Replace(text, @"\{\{\s*(.*?)\s*\}\}", m =>
         {
